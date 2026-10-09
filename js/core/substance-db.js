@@ -242,7 +242,9 @@ export class SubstanceDB {
       const hit = (s, m) => { if (s > score) { score = s; match = m; } };
       if (nq) {
         if (k.name === nq || k.nameNoOx === nq) hit(100, 'Name');
-        if (k.aliases.includes(nq)) hit(95, 'Alias');
+        // Erster Alias = gebräuchliche Abkürzung (z. B. PFOA bei der freien Säure) zuerst
+        if (k.aliases[0] === nq) hit(97, 'Alias');
+        else if (k.aliases.includes(nq)) hit(95, 'Alias');
         if (k.name.startsWith(nq) || k.nameNoOx.startsWith(nq)) hit(70, 'Name');
         if (k.aliases.some((a) => a.startsWith(nq))) hit(65, 'Alias');
         if (k.words.some((w) => w.startsWith(nq))) hit(55, 'Name');

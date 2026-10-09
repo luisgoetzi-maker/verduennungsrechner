@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="de" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Verdünnungsrechner</title>
+  <meta name="description" content="Verdünnungs- und Lösungsrechner für den Laboralltag – offline, lokal, auf Deutsch.">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="color-scheme" content="dark light">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/app.css">
+  <script>
+    // Farbschema vor dem ersten Zeichnen setzen (kein weißes Aufblitzen)
+    try {
+      var s = JSON.parse(localStorage.getItem('vr.settings') || '{}');
+      var t = s.theme || 'dark';
+      if (t === 'system') t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) { /* Standard: dunkel */ }
+  </script>
+  <script type="module" src="js/ui/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <img class="logo" src="icons/icon.svg" alt="" width="28" height="28">
+    <h1>Verdünnungsrechner</h1>
+    <span id="net" class="badge">offline-fähig</span>
+  </header>
+  <main id="view"></main>
+  <nav class="bottomnav" id="nav" aria-label="Hauptnavigation"></nav>
+  <noscript><p style="padding:16px">Bitte JavaScript aktivieren.</p></noscript>
+</body>
+</html>

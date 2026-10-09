@@ -3,6 +3,7 @@
 export const DEFAULT_SETTINGS = Object.freeze({
   sig: 4, // signifikante Stellen in Ergebnissen
   theme: 'dark', // 'dark' | 'light' | 'system'
+  textKeyboard: false, // Mengenfelder mit Text- statt Zifferntastatur (für Eingaben wie "5 µg/mL")
   // Plausibilitätsgrenzen
   minPipetteUL: 10, // Pipettiervolumen darunter -> Warnung
   maxStepFactor: 1000, // Verdünnungsfaktor pro Schritt darüber -> Warnung
@@ -48,6 +49,7 @@ export function sanitizeSettings(s) {
   return {
     sig: int(s.sig, 2, 8, d.sig),
     theme: ['dark', 'light', 'system'].includes(s.theme) ? s.theme : d.theme,
+    textKeyboard: !!s.textKeyboard,
     minPipetteUL: pos(s.minPipetteUL, d.minPipetteUL),
     maxStepFactor: pos(s.maxStepFactor, d.maxStepFactor),
     minMassMg: pos(s.minMassMg, d.minMassMg),

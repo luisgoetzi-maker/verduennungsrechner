@@ -1,0 +1,27 @@
+{
+  "name": "Verdünnungsrechner",
+  "short_name": "Verdünnung",
+  "description": "Verdünnungs- und Lösungsrechner für den Laboralltag – offline, lokal, auf Deutsch.",
+  "lang": "de",
+  "dir": "ltr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "categories": ["education", "utilities", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Einwaage", "url": "./#rechner/einwaage", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Verdünnung", "url": "./#rechner/verduennung", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Kalibrierreihe", "url": "./#rechner/reihe", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Umrechner", "url": "./#rechner/umrechner", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

@@ -51,6 +51,7 @@ export const PARAMS = Object.freeze({
   rhoSol: { label: 'Dichte der Lösung', unit: 'g/mL' },
   rhoSub: { label: 'Dichte des reinen Stoffes', unit: 'g/mL' },
   z: { label: 'Wertigkeit z', unit: 'eq/mol' },
+  density: { label: 'Dichte des Stoffes bzw. der konzentrierten Lösung', unit: 'g/mL' },
 });
 
 export const HINTS = Object.freeze({
@@ -374,7 +375,7 @@ export function bestUnit(baseValue, candidates) {
 
 /** Sinnvolle Volumeneinheit (µL / mL / L) für einen Wert in L. */
 export function autoVolume(liters) {
-  const a = Math.abs(liters);
+  const a = Math.abs(liters) * (1 + 1e-9);
   if (a === 0) return parseUnit('mL');
   if (a < 1e-6) return parseUnit('nL');
   if (a < 1e-3) return parseUnit('µL');
@@ -384,7 +385,7 @@ export function autoVolume(liters) {
 
 /** Sinnvolle Masseneinheit (µg / mg / g / kg) für einen Wert in g. */
 export function autoMass(grams) {
-  const a = Math.abs(grams);
+  const a = Math.abs(grams) * (1 + 1e-9);
   if (a === 0) return parseUnit('g');
   if (a < 1e-6) return parseUnit('ng');
   if (a < 1e-3) return parseUnit('µg');
