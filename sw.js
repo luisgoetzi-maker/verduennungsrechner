@@ -3,7 +3,7 @@
 // in js/ui/version.js), damit Geräte die neue Version laden.
 // Dateiliste aktualisieren: node tools/update-sw.js
 
-const CACHE_VERSION = 'vr-1.0.1';
+const CACHE_VERSION = 'vr-1.1.0';
 
 const ASSETS = [
   // ASSETS-START
@@ -27,6 +27,7 @@ const ASSETS = [
   './js/core/modes/index.js',
   './js/core/modes/istd.js',
   './js/core/modes/konzentriert.js',
+  './js/core/modes/mischung.js',
   './js/core/modes/reihe.js',
   './js/core/modes/umrechner.js',
   './js/core/modes/verduennung.js',
@@ -50,6 +51,7 @@ const ASSETS = [
   './js/ui/forms/einwaage.js',
   './js/ui/forms/istd.js',
   './js/ui/forms/konzentriert.js',
+  './js/ui/forms/mischung.js',
   './js/ui/forms/reihe.js',
   './js/ui/forms/umrechner.js',
   './js/ui/forms/verduennung.js',

@@ -243,13 +243,17 @@ export function substancePicker({ name = 'substance', label = 'Stoff', db, onInp
     clear(listEl);
     if (!q) { closeList(); return; }
     const items = [];
-    const fr = /[A-Z]/.test(q) && !/\s/.test(q) ? tryParseFormula(q) : { ok: false };
-    if (fr.ok) {
-      items.push(h('button', { type: 'button', class: 'picker-item', onpointerdown: (e) => { e.preventDefault(); choose({ formula: q }); } },
-        h('span', { class: 'nm' }, 'Formel verwenden'), h('span', { class: 'fm' }, fr.pretty),
-        h('span', { class: 'meta' }, `${fmtM(fr.molarMass)}${fr.notes.length ? ` · ${fr.notes[0]}` : ''}`)));
-    }
     const res = db.search(q, { limit: 15 });
+    const fr = /[A-Z]/.test(q) && !/\s/.test(q) ? tryParseFormula(q) : { ok: false };
+    const formulaItem = fr.ok
+      ? h('button', { type: 'button', class: 'picker-item', onpointerdown: (e) => { e.preventDefault(); choose({ formula: q }); } },
+        h('span', { class: 'nm' }, 'Formel verwenden'), h('span', { class: 'fm' }, fr.pretty),
+        h('span', { class: 'meta' }, `${fmtM(fr.molarMass)}${fr.notes.length ? ` · ${fr.notes[0]}` : ''}`))
+      : null;
+    // Exakter Datenbanktreffer mit anderer Zusammensetzung geht vor
+    // (z. B. "PFOS" = Perfluoroctansulfonsäure, nicht die Formel P-F-O-S)
+    const exactDb = fr.ok && res.some((r) => r.score >= 92 && r.entry.hill !== fr.hill);
+    if (formulaItem && !exactDb) items.push(formulaItem);
     const top = res.filter((r) => r.score >= 92);
     if (top.length > 1 && top.some((r) => r.match === 'Alias')) {
       items.push(h('div', { class: 'picker-group' }, `„${q}“ ist mehrdeutig – ${top.length} Varianten:`));
@@ -261,6 +265,7 @@ export function substancePicker({ name = 'substance', label = 'Stoff', db, onInp
         h('span', { class: 'nm' }, s.name), h('span', { class: 'fm' }, `${s.pretty || s.formula || ''}`),
         h('span', { class: 'meta' }, `${fmtM(s.mw)}${meta ? ` · ${meta}` : ''}`)));
     }
+    if (formulaItem && exactDb) items.push(formulaItem);
     if (!items.length) items.push(h('div', { class: 'picker-item', style: { cursor: 'default' } }, h('span', { class: 'meta' }, 'Kein Treffer. Formel mit Großbuchstaben eingeben (z. B. C8HF15O2) oder Stoff in der Datenbank anlegen.')));
     listEl.append(...items);
     listEl.classList.remove('hidden');

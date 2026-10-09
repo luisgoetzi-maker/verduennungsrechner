@@ -41,7 +41,8 @@ export function evaluatePractice(R, settings = DEFAULT_SETTINGS) {
   const devices = [];
   if (!R || !R.ok) return { warnings, devices };
   const minL = S.minPipetteUL * 1e-6;
-  const series = R.table && R.table.type === 'series';
+  // Reihe und Mischung: Hinweise und Geräte stehen je Zeile in der Tabelle
+  const series = R.table && (R.table.type === 'series' || R.table.type === 'mix');
   const seen = new Set();
   const once = (key, fn) => { if (!seen.has(key)) { seen.add(key); fn(); } };
 
@@ -87,6 +88,7 @@ export function evaluatePractice(R, settings = DEFAULT_SETTINGS) {
       }
       case 'mass': {
         if (!(c.g > 0)) break;
+        if (series) break;
         const mg = c.g * 1000;
         devices.push({ label: c.label || 'Einwaage', text: mg < 100000 ? 'Analysenwaage (Ablesbarkeit 0,1 mg)' : 'Präzisionswaage (0,01 g)' });
         if (mg < S.minMassMg * (1 - 1e-9)) {
@@ -99,8 +101,13 @@ export function evaluatePractice(R, settings = DEFAULT_SETTINGS) {
     }
   }
 
-  if (series) {
+  if (series && R.table.type === 'series') {
     for (const r of R.table.rows) r.device = shortDevice(suggestPipette(r.V, S));
+  }
+  if (series && R.table.type === 'mix') {
+    for (const r of R.table.rows) {
+      r.device = r.kind === 'stock' || r.Vp ? shortDevice(suggestPipette(r.kind === 'stock' ? r.V : r.Vp, S)) : 'Analysenwaage';
+    }
   }
   return { warnings, devices };
 }

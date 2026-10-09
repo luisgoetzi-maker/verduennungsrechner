@@ -10,6 +10,7 @@ import { createForm as formKonzentriert } from '../forms/konzentriert.js';
 import { createForm as formReihe } from '../forms/reihe.js';
 import { createForm as formUmrechner } from '../forms/umrechner.js';
 import { createForm as formIstd } from '../forms/istd.js';
+import { createForm as formMischung } from '../forms/mischung.js';
 
 const FORMS = {
   einwaage: formEinwaage,
@@ -18,6 +19,7 @@ const FORMS = {
   reihe: formReihe,
   umrechner: formUmrechner,
   istd: formIstd,
+  mischung: formMischung,
 };
 
 export async function copyText(text) {

@@ -4,7 +4,7 @@
 import { h, ICONS } from './dom.js';
 import { formatNumber } from '../core/numbers.js';
 import { formatAuto, PARAMS } from '../core/units.js';
-import { seriesRows } from '../core/export.js';
+import { seriesRows, mixRows } from '../core/export.js';
 
 function msg(level, text) {
   return h('div', { class: `msg ${level}` }, h('div', {}, text));
@@ -29,6 +29,15 @@ function seriesTable(table, sig) {
         const cls = r.intermediate ? 'inter' : (r.notes && r.notes.length ? 'flag' : '');
         return h('tr', { class: cls }, cells.map((c, j) => h('td', { class: j === cells.length - 1 ? 'note' : '' }, c)));
       }))));
+}
+
+function mixTable(table) {
+  const { headers, rows } = mixRows(table);
+  return h('div', { class: 'table-wrap' },
+    h('table', { class: 'data mix' },
+      h('thead', {}, h('tr', {}, headers.map((x) => h('th', {}, x)))),
+      h('tbody', {}, rows.map((cells, i) => h('tr', { class: table.rows[i].notes.length ? 'flag' : '' },
+        cells.map((c, j) => h('td', { class: j === cells.length - 1 ? 'note' : j === 4 ? 'amt' : '' }, c)))))));
 }
 
 function convertTable(table, sig) {
@@ -85,6 +94,7 @@ export function renderResult(R, { sig = 4, actions = [], extra = [] } = {}) {
   }
 
   if (R.table && R.table.type === 'series') card.append(seriesTable(R.table, sig));
+  if (R.table && R.table.type === 'mix') card.append(mixTable(R.table));
   if (R.table && R.table.type === 'convert') card.append(...convertTable(R.table, sig));
 
   R.hints.forEach((t) => card.append(msg('info', t)));

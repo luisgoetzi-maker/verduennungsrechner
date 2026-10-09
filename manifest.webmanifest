@@ -22,6 +22,7 @@
     { "name": "Einwaage", "url": "./#rechner/einwaage", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Verdünnung", "url": "./#rechner/verduennung", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Kalibrierreihe", "url": "./#rechner/reihe", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Umrechner", "url": "./#rechner/umrechner", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+    { "name": "Umrechner", "url": "./#rechner/umrechner", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Mischstandard", "url": "./#rechner/mischung", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

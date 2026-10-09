@@ -51,6 +51,11 @@ test('Suche: mehrdeutiges "EDTA" liefert alle Varianten mit Formel und Molarer M
 test('Suche nach Alias, Formel, CAS, Umlauten und Summenformel', () => {
   const db = new SubstanceDB(createMemoryStorage());
   assert.equal(db.search('Titriplex III')[0].entry.id, 'na2edta-2h2o');
+  // Abkürzung trifft zuerst die freie Säure, nicht das Salz
+  assert.equal(db.search('PFOA')[0].entry.id, 'pfoa');
+  assert.equal(db.search('PFOS')[0].entry.id, 'pfos');
+  assert.equal(db.search('PFBS')[0].entry.id, 'pfbs');
+  assert.equal(db.search('Tris')[0].entry.id, 'tris');
   assert.equal(db.search('7758-99-8')[0].entry.id, 'cuso4-5h2o');
   assert.equal(db.search('CuSO4·5H2O')[0].entry.id, 'cuso4-5h2o');
   assert.equal(db.search('CuSO4.5H2O')[0].entry.id, 'cuso4-5h2o');

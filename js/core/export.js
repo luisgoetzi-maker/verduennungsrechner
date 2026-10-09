@@ -42,6 +42,14 @@ export function seriesRows(table, sig = 4) {
   return { headers, rows };
 }
 
+/** Mischstandard (Modus G) als Tabellenzeilen. */
+export function mixRows(table) {
+  const withDevice = table.rows.some((r) => r.device);
+  const headers = ['Nr', 'Stoff', 'Ziel', 'aus', 'abmessen', ...(withDevice ? ['Gerät'] : []), 'Hinweis'];
+  const rows = table.rows.map((r) => [r.nr, r.name, r.target, r.source, r.amount, ...(withDevice ? [r.device || ''] : []), (r.notes || []).join('; ')]);
+  return { headers, rows };
+}
+
 /**
  * @param {object} R Ergebnis eines Rechenmodus
  * @param {{title?:string, date?:Date|number, sig?:number, inputs?:string[]}} meta
@@ -77,6 +85,12 @@ export function resultToText(R, meta = {}) {
     out.push('');
     out.push('Pipettierplan:');
     out.push(textTable(t.headers, t.rows, [1, 3, 4, 5, 6]));
+  }
+  if (R.table && R.table.type === 'mix') {
+    const t = mixRows(R.table);
+    out.push('');
+    out.push('Komponenten:');
+    out.push(textTable(t.headers, t.rows));
   }
   if (R.table && R.table.type === 'convert') {
     out.push('');

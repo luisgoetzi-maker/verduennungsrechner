@@ -413,6 +413,17 @@ table.data td:first-child, table.data th:first-child { text-align: left; }
 table.data tr.flag td { background: var(--warn-bg); }
 table.data tr.inter td { background: var(--info-bg); }
 table.data tr.best td { color: var(--accent-strong); font-weight: 650; }
+.comp {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.comp .field { margin-bottom: 10px; }
+table.data.mix th, table.data.mix td { text-align: left; white-space: nowrap; }
+table.data.mix td:nth-child(2) { white-space: normal; min-width: 130px; }
+table.data.mix td.amt { white-space: nowrap; font-weight: 700; color: var(--accent-strong); }
 table.data td.note { white-space: normal; text-align: left; color: var(--warn); font-size: 0.8rem; min-width: 210px; }
 .group-title { margin: 14px 0 4px; font-size: 0.85rem; color: var(--muted); font-weight: 650; }
 

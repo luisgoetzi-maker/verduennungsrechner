@@ -110,6 +110,26 @@ export function estimateUncertainty(spec, opts = {}) {
         add(`Endvolumen ${formatAuto(st.V2, 'volume', 3)}`, v2.device, v2.urel);
       }
     }
+  } else if (spec.kind === 'mix') {
+    // je Komponente: Pipette bzw. Waage + gemeinsamer Messkolben
+    const flask = volumeUncertainty(spec.V, 'flask', S);
+    const per = spec.items.map((it) => {
+      let u2 = flask.urel ** 2;
+      let devices;
+      if (it.V1) {
+        const v = volumeUncertainty(it.V1, 'pipette', S);
+        u2 += v.urel ** 2 + stockUrel ** 2;
+        devices = `${v.device}; ${flask.device}`;
+      } else {
+        const bal = opts.balanceMg ?? 0.1;
+        u2 += (bal / 1000 / it.m) ** 2 + (opts.purityUrel || 0) ** 2;
+        devices = `Waage ${formatNumber(bal, 2)} mg; ${flask.device}`;
+      }
+      return { label: it.label, urel: Math.sqrt(u2), devices };
+    });
+    const worst = per.reduce((a, b) => (b.urel > a.urel ? b : a), per[0]);
+    const lines = per.map((p) => `${p.label}: u = ${pct(p.urel)}, U (k=2) = ${pct(2 * p.urel)}`);
+    return { ok: true, rows: per.map((p) => ({ label: p.label, device: p.devices, urel: p.urel })), urel: worst.urel, U: 2 * worst.urel, perStandard: per, lines };
   } else if (spec.kind === 'parallel' || spec.kind === 'serial') {
     // je Standard; seriell kumuliert
     // Quelle je Standard: Stamm, Zwischenverdünnung (Z) oder vorheriger Standard (seriell)
