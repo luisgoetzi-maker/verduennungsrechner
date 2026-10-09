@@ -64,7 +64,7 @@ function solutionPrefill(R, mode, form, meta) {
   let conc = '';
   if (mode.id === 'einwaage' || mode.id === 'konzentriert') conc = qText(input.conc);
   if (mode.id === 'verduennung' && R.values) conc = `${formatNumber(R.values.c2, 4)} ${R.values.cUnit}`;
-  if (mode.id === 'mischung' && R.values) {
+  if (R.table && R.table.type === 'mix' && R.values) {
     conc = R.values.components.map((c) => `${c.name} ${c.target}`).join('; ');
     return { name: `Mischstandard (${R.values.components.map((c) => c.name).join(', ')})`.slice(0, 120), conc, substance: '', calc: resultToText(R, meta) };
   }

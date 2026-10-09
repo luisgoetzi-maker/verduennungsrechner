@@ -413,6 +413,15 @@ table.data td:first-child, table.data th:first-child { text-align: left; }
 table.data tr.flag td { background: var(--warn-bg); }
 table.data tr.inter td { background: var(--info-bg); }
 table.data tr.best td { color: var(--accent-strong); font-weight: 650; }
+.add-btn {
+  width: 100%;
+  margin: 2px 0 14px;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+  color: var(--accent);
+  background: transparent;
+}
+.add-btn svg { width: 22px; height: 22px; }
 .comp {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);

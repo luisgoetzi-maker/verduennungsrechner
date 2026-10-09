@@ -40,6 +40,7 @@ export function calcMischung(input, settings = {}) {
       ? readQuantity(input.commonConc, { kinds: CONC_KINDS, label: 'Zielkonzentration (für alle)', field: 'commonConc' })
       : null;
     const minL = S.minPipetteUL * 1e-6;
+    const rhoSol = readNumber(input.rhoSol, { label: 'Dichte der Lösung', field: 'rhoSol', min: 0 });
 
     R.steps.push(note('Gegeben', `Endvolumen ${f.q(amount)}; ${comps.length} ${comps.length === 1 ? 'Komponente' : 'Komponenten'}${common ? `; je ${f.q(common)}` : ''}`));
     R.steps.push(note('Formeln', 'Stammlösung: V = c(Ziel) · V(End) / c(Stamm); Feststoff: m = c · V(End) · M / Reinheit'));
@@ -66,15 +67,18 @@ export function calcMischung(input, settings = {}) {
         if (c.source === 'solid') {
           const purity = readNumber(c.purity, { label: `${lbl}: Reinheit`, field: 'components', min: 0, max: 100 }) ?? c.substance?.purity ?? 100;
           const ref = resolveReference(c.reference, mm, f);
-          const r = pureMassNeeded(R, f, { conc, V, mSol: null, mm, ref, z: c.substance?.z ?? null, rhoSol: null });
+          const z = readNumber(c.z, { label: `${lbl}: Wertigkeit`, field: 'components', min: 0 }) ?? c.substance?.z ?? null;
+          const r = pureMassNeeded(R, f, { conc, V, mSol: null, mm, ref, z, rhoSol });
           let m = r.mComp;
           if (purity < 100) {
             m = r.mComp / (purity / 100);
             R.steps.push(step('Reinheit', 'm(Einwaage) = m / w', `${f.g(r.mComp)} / ${f.n(purity / 100)}`, f.g(m)));
           }
           for (let k = firstStep; k < R.steps.length; k++) R.steps[k].label = `${lbl} – ${R.steps[k].label}`;
-          const liquid = c.substance && c.substance.state === 'l' && c.substance.density;
-          const Vp = liquid ? m / (c.substance.density * 1000) : null;
+          const rhoP = readNumber(c.density, { label: `${lbl}: Dichte`, field: 'components', min: 0 })
+            ?? (c.substance && c.substance.state === 'l' ? c.substance.density : null) ?? null;
+          const liquid = !!rhoP;
+          const Vp = liquid ? m / (rhoP * 1000) : null;
           const notes = [];
           if (m * 1000 < S.minMassMg * (1 - 1e-9)) notes.push(`unter ${f.n(S.minMassMg)} mg`);
           if (Vp !== null && Vp < minL * (1 - 1e-9)) notes.push(`unter ${f.n(S.minPipetteUL)} µL`);
@@ -146,4 +150,31 @@ export function calcMischung(input, settings = {}) {
       items: rows.map((r) => (r.kind === 'stock' ? { label: `(${r.nr}) ${r.name}`, V1: r.V } : { label: `(${r.nr}) ${r.name}`, m: r.m })),
     };
   });
+}
+
+/** Hat die Einwaage weitere Stoffe (über das ＋ im Formular)? */
+export function hasExtraSubstances(input) {
+  return Array.isArray(input && input.extra) && input.extra.some((e) => e && (e.substance || String(e.formula || '').trim()));
+}
+
+/**
+ * Modus A mit mehreren Stoffen: Einwaage jedes Stoffes für eine gemeinsame Lösung.
+ * Der erste Stoff kommt aus den normalen Feldern, weitere aus input.extra.
+ */
+export function calcEinwaageMehrere(input, settings = {}) {
+  let kind = null;
+  try {
+    kind = readQuantity(input.amount, { label: 'Volumen', field: 'amount' }).unit.kind;
+  } catch {
+    // ungültige oder fehlende Eingabe: die Meldung kommt aus calcMischung
+  }
+  if (kind === 'massq') {
+    return runCalc(() => { throw new CalcError('Bei mehreren Stoffen bitte das Volumen der Lösung angeben (z. B. in mL).', 'amount'); });
+  }
+  const main = {
+    substance: input.substance, formula: input.formula, M: input.M, conc: input.conc, purity: input.purity,
+    reference: input.reference, density: input.density, z: input.z, source: 'solid',
+  };
+  const extra = input.extra.filter((e) => e && (e.substance || String(e.formula || '').trim())).map((e) => ({ ...e, source: 'solid' }));
+  return calcMischung({ amount: input.amount, rhoSol: input.rhoSol, components: [main, ...extra] }, settings);
 }

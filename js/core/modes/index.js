@@ -5,10 +5,15 @@ import { calcKonzentriert } from './konzentriert.js';
 import { calcReihe } from './reihe.js';
 import { calcUmrechner } from './umrechner.js';
 import { calcIstd } from './istd.js';
-import { calcMischung } from './mischung.js';
+import { calcMischung, calcEinwaageMehrere, hasExtraSubstances } from './mischung.js';
+
+/** Einwaage: ein Stoff wie bisher, mehrere Stoffe (＋) als gemeinsame Lösung. */
+function calcEinwaageAuto(input, settings) {
+  return hasExtraSubstances(input) ? calcEinwaageMehrere(input, settings) : calcEinwaage(input, settings);
+}
 
 export const MODES = [
-  { id: 'einwaage', key: 'A', label: 'Einwaage', title: 'Einwaage berechnen', calc: calcEinwaage },
+  { id: 'einwaage', key: 'A', label: 'Einwaage', title: 'Einwaage berechnen', calc: calcEinwaageAuto },
   { id: 'verduennung', key: 'B', label: 'Verdünnung', title: 'Verdünnung c₁·V₁ = c₂·V₂', calc: calcVerduennung },
   { id: 'konzentriert', key: 'C', label: 'Konz. Lösung', title: 'Konzentrierte Lösung', calc: calcKonzentriert },
   { id: 'reihe', key: 'D', label: 'Reihe', title: 'Verdünnungs-/Kalibrierreihe', calc: calcReihe },

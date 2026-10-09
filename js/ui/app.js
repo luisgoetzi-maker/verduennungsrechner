@@ -9,6 +9,7 @@ import { renderCalc } from './views/calc.js';
 import { renderSubstances } from './views/substances.js';
 import { renderSettings } from './views/settings.js';
 import { MODE_BY_ID } from '../core/modes/index.js';
+import { APP_VERSION } from './version.js';
 
 const storage = createLocalStorage('vr.');
 
@@ -137,6 +138,9 @@ export function start() {
   registerServiceWorker();
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
   if (!storage.persistent) toast('Lokaler Speicher nicht verfügbar – Daten werden nicht gespeichert.', 5000);
+  const seen = storage.get('appVersion');
+  if (seen && seen !== APP_VERSION) setTimeout(() => toast(`Aktualisiert auf Version ${APP_VERSION}.`, 3500), 600);
+  storage.set('appVersion', APP_VERSION);
 }
 
 // Erweiterungen (Etappe 3) laden, dann starten

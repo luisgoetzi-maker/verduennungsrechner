@@ -3,7 +3,7 @@
 // in js/ui/version.js), damit Geräte die neue Version laden.
 // Neue App-Dateien unten in ASSETS eintragen.
 
-const CACHE_VERSION = 'vr-1.1.1';
+const CACHE_VERSION = 'vr-1.2.0';
 
 const ASSETS = [
   // ASSETS-START
@@ -66,6 +66,8 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
+  // neue Version sofort übernehmen, nicht auf einen Klick warten
+  self.skipWaiting();
   event.waitUntil(caches.open(CACHE_VERSION).then((cache) => cache.addAll(ASSETS)));
 });
 
