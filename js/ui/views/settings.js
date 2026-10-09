@@ -7,6 +7,7 @@
   const { DEFAULT_SETTINGS } = VR.use('core/settings.js');
   const { buildBackup, inspectBackup, applyBackup } = VR.use('core/backup.js');
   const { APP_VERSION } = VR.use('ui/version.js');
+  const { installCard } = VR.use('ui/install.js');
 
 function renderSettings(root, app) {
   const s = app.settings;
@@ -87,6 +88,7 @@ function renderSettings(root, app) {
   if (!app.storage.persistent) persistInfo.textContent = 'Achtung: Der Browser erlaubt keinen lokalen Speicher (privater Modus?). Daten gehen beim Schließen verloren.';
 
   root.append(
+    installCard(),
     h('section', { class: 'card' }, h('h2', {}, 'Darstellung'), theme.el, sig.el, kb.el),
     h('section', { class: 'card' }, h('h2', {}, 'Plausibilitätswarnungen'), h('div', { class: 'grid2' }, minPip.el, maxF.el), h('div', { class: 'grid2' }, minMass.el, warnDays.el)),
     h('section', { class: 'card' }, h('h2', {}, 'Laborgeräte'), flasks.el, pips.el, vols.el, round.el,

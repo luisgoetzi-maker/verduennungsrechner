@@ -12,6 +12,7 @@
   const { renderSettings } = VR.use('ui/views/settings.js');
   const { MODE_BY_ID } = VR.use('core/modes/index.js');
   const { APP_VERSION } = VR.use('ui/version.js');
+  const { initInstall, installStatus, onInstallChange, promptInstall } = VR.use('ui/install.js');
   const { install: installFeatures } = VR.use('ui/features.js');
 
 const storage = createLocalStorage('vr.');
@@ -92,6 +93,11 @@ function route(keepScroll = false) {
 function updateNetBadge() {
   const b = document.getElementById('net');
   if (!b) return;
+  const ib = document.getElementById('install-btn');
+  const showInstall = !installStatus().standalone && navigator.onLine;
+  if (ib) ib.classList.toggle('hidden', !showInstall);
+  // Platz in der Kopfzeile: "offline-fähig" nur, wenn kein Installieren-Knopf da ist
+  b.classList.toggle('hidden', showInstall);
   if (navigator.onLine) {
     b.textContent = 'offline-fähig';
     b.classList.remove('offline');
@@ -136,6 +142,10 @@ function start() {
   window.addEventListener('hashchange', () => route());
   window.addEventListener('online', updateNetBadge);
   window.addEventListener('offline', updateNetBadge);
+  initInstall();
+  onInstallChange(updateNetBadge);
+  const ib = document.getElementById('install-btn');
+  if (ib) ib.addEventListener('click', promptInstall);
   updateNetBadge();
   route();
   registerServiceWorker();

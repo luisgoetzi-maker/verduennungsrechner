@@ -3,7 +3,7 @@
 (function () {
   'use strict';
 
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.3.1';
 
   VR.provide('ui/version.js', { APP_VERSION });
 }());

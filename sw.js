@@ -3,7 +3,7 @@
 // in js/ui/version.js), damit Geräte die neue Version laden.
 // Neue App-Dateien unten in ASSETS eintragen.
 
-const CACHE_VERSION = 'vr-1.3.0';
+const CACHE_VERSION = 'vr-1.3.1';
 
 const ASSETS = [
   // ASSETS-START
@@ -55,6 +55,7 @@ const ASSETS = [
   './js/ui/forms/reihe.js',
   './js/ui/forms/umrechner.js',
   './js/ui/forms/verduennung.js',
+  './js/ui/install.js',
   './js/ui/pdf-export.js',
   './js/ui/result-view.js',
   './js/ui/version.js',
