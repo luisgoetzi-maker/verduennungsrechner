@@ -1,9 +1,9 @@
 // Service Worker: speichert alle App-Dateien für den Offline-Betrieb.
 // Bei jeder Änderung an App-Dateien CACHE_VERSION erhöhen (und APP_VERSION
 // in js/ui/version.js), damit Geräte die neue Version laden.
-// Dateiliste aktualisieren: node tools/update-sw.js
+// Neue App-Dateien unten in ASSETS eintragen.
 
-const CACHE_VERSION = 'vr-1.1.0';
+const CACHE_VERSION = 'vr-1.1.1';
 
 const ASSETS = [
   // ASSETS-START
@@ -38,7 +38,6 @@ const ASSETS = [
   './js/core/settings.js',
   './js/core/solutions.js',
   './js/core/storage.js',
-  './js/core/substance-check.js',
   './js/core/substance-db.js',
   './js/core/substances-seed.js',
   './js/core/uncertainty.js',

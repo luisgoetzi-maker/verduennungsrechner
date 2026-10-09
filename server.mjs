@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-// Minimaler statischer Webserver (ohne Abhängigkeiten) zum Testen im WLAN.
-// Aufruf: node tools/serve.js [Port] [--open]   (Standard-Port 8080; --open öffnet den Browser)
+// Minimaler statischer Webserver (ohne Abhängigkeiten) für den Start am PC bzw. im WLAN.
+// Aufruf: node server.mjs [Port] [--open]   (Standard-Port 8080; --open öffnet den Browser)
+// Unter Windows einfach start.bat doppelklicken.
 //
 // Hinweis: Der Service Worker (Offline-Betrieb, Installation als App) läuft nur
 // auf "sicheren" Adressen: https://… oder http://localhost. Über die
 // WLAN-Adresse http://192.168.x.x funktioniert die App, aber ohne Offline-
-// Modus – siehe README.md (USB-Weiterleitung oder GitHub Pages).
+// Modus (dafür USB-Portweiterleitung auf localhost oder https-Hosting, z. B. GitHub Pages).
 
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -14,7 +15,7 @@ import { exec } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, normalize, extname, sep } from 'node:path';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const root = dirname(fileURLToPath(import.meta.url));
 const port = Number(process.argv.slice(2).find((a) => /^\d+$/.test(a))) || 8080;
 const openBrowser = process.argv.includes('--open');
 const url = `http://localhost:${port}/`;
@@ -72,7 +73,7 @@ server.listen(port, '0.0.0.0', () => {
   console.log(`  am PC:      http://localhost:${port}/`);
   for (const list of Object.values(networkInterfaces())) {
     for (const a of list || []) {
-      if (a.family === 'IPv4' && !a.internal) console.log(`  im WLAN:    http://${a.address}:${port}/   (ohne Offline-Modus, siehe README)`);
+      if (a.family === 'IPv4' && !a.internal) console.log(`  im WLAN:    http://${a.address}:${port}/   (ohne Offline-Modus)`);
     }
   }
   console.log('Beenden mit Strg+C (oder dieses Fenster schließen).');

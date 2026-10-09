@@ -8,5 +8,5 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-node tools\serve.js 8080 --open
+node server.mjs 8080 --open
 pause

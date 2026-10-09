@@ -46,7 +46,7 @@
         document.querySelector('#boot-msg h2').textContent = 'Bitte nicht direkt als Datei öffnen';
         hint.innerHTML = 'Beim Öffnen per Doppelklick (Adresse beginnt mit <code>file://</code>) blockiert der Browser die Programmteile der App. '
           + 'Bitte im Projektordner <strong>start.bat</strong> doppelklicken – das startet einen kleinen lokalen Server und öffnet die App unter '
-          + '<a href="http://localhost:8080/">http://localhost:8080/</a>. Alternativ im Terminal: <code>node tools/serve.js</code>.';
+          + '<a href="http://localhost:8080/">http://localhost:8080/</a>. Alternativ im Terminal: <code>node server.mjs</code>.';
         return;
       }
       setTimeout(function () {

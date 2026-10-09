@@ -1,6 +1,6 @@
 // Abschätzung der Messunsicherheit aus Gerätetoleranzen (Fehlerfortpflanzung).
 //
-// Annahmen (siehe ANNAHMEN.md):
+// Annahmen:
 //  - Toleranzen von Messkolben/Vollpipetten (Klasse A) als Rechteckverteilung: u = T/√3
 //  - Kolbenhubpipetten (ISO 8655-2): systematische Abweichung e (Rechteck) und
 //    zufällige Abweichung s am Nennvolumen, absolut auch für Teilvolumina:

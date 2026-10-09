@@ -2,9 +2,7 @@
 //
 // ACHTUNG: Alle Werte (CAS-Nummern, Dichten, Gehalte) wurden aus dem
 // Gedächtnis eingetragen und müssen gegen Sicherheitsdatenblätter bzw.
-// PubChem geprüft werden. Prüfwerkzeuge:
-//   node tools/check-substances.js   (Formeln, CAS-Prüfziffern, Plausibilität)
-//   node tools/verify-pubchem.js     (Abgleich der Summenformel mit PubChem, Internet nötig)
+// PubChem geprüft werden.
 //
 // Felder:
 //   id       eindeutiger, stabiler Schlüssel (nicht ändern – eigene Änderungen
