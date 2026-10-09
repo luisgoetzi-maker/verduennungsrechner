@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { SEED_SUBSTANCES } from '../js/core/substances-seed.js';
 import { checkSubstances } from '../js/core/substance-check.js';
+import { FLASK_TOL, VOLPIP_TOL, PIPETTE_TOL } from '../js/core/uncertainty.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const { errors, warnings, infos, rows } = checkSubstances(SEED_SUBSTANCES);
@@ -53,6 +54,19 @@ if (process.argv.includes('--md')) {
   rows.filter((r) => r.density === undefined).forEach((r) => {
     lines.push(`| ☐ | ${r.name} | ${r.formula} | ${fmt(r.mw, 3)} | ${r.cas} | ${r.cat} |`);
   });
+  lines.push('');
+  lines.push('## Weitere aus dem Gedächtnis eingetragene Werte (Messunsicherheit)');
+  lines.push('');
+  lines.push('Toleranzen in `js/core/uncertainty.js` – bitte mit den Angaben der eigenen Geräte (Zertifikat/Norm) vergleichen:');
+  lines.push('');
+  lines.push(`- Messkolben Klasse A (DIN EN ISO 1042), ± mL: ${Object.entries(FLASK_TOL).map(([v, t]) => `${v} mL: ${String(t).replace('.', ',')}`).join('; ')}`);
+  lines.push(`- Vollpipetten Klasse A (DIN EN ISO 648), ± mL: ${Object.entries(VOLPIP_TOL).map(([v, t]) => `${v} mL: ${String(t).replace('.', ',')}`).join('; ')}`);
+  lines.push(`- Kolbenhubpipetten (ISO 8655-2), systematisch/zufällig in %: ${Object.entries(PIPETTE_TOL).map(([v, [e, s]]) => `${v} µL: ${String(e).replace('.', ',')}/${String(s).replace('.', ',')}`).join('; ')}`);
+  lines.push('- Waage: Standardunsicherheit 0,1 mg je Einwaage');
+  lines.push('');
+  lines.push('## Abgleich mit PubChem');
+  lines.push('');
+  lines.push('`node tools/verify-pubchem.js` vergleicht die Summenformel jeder CAS-Nummer mit PubChem und schreibt `PUBCHEM-ABGLEICH.md`.');
   lines.push('');
   if (warnings.length || infos.length) {
     lines.push('## Meldungen des Prüfskripts');

@@ -6,7 +6,7 @@ Diese Datei hält den aktuellen Stand fest, damit nach einem Abbruch nahtlos wei
 
 - [x] Etappe 1: Rechenkern (Parser, Einheiten, Stoffdatenbank) + Tests – 41 Tests grün
 - [x] Etappe 2: Rechenmodi A–F mit Oberfläche – 67 Tests grün, im Browser geprüft (Mobilansicht, offline)
-- [ ] Etappe 3: Praxisfunktionen (Warnungen, Geräte, Lösungen, Verlauf, Export, Messunsicherheit)
+- [x] Etappe 3: Praxisfunktionen (Warnungen, Geräte, Lösungen, Verlauf, Export, Messunsicherheit) – 83 Tests grün, im Browser geprüft
 
 ## Etappe 1 – erledigt
 
@@ -37,9 +37,23 @@ PubChem-Abgleich (209 von 213 CAS-Nummern bestätigt) → `PUBCHEM-ABGLEICH.md`;
 
 Jeder Modus liefert `checks` (Volumina, Massen, Faktoren) – Etappe 3 wertet sie für Warnungen und Gerätevorschläge aus (`js/ui/features.js` ist der Einhängepunkt).
 
-## Nächste Schritte
+## Etappe 3 – erledigt
 
-- Etappe 3: `js/core/practice.js` (Plausibilität + Geräte aus `checks`), `js/core/uncertainty.js`, `js/core/solutions.js`, `js/core/history.js`, `js/core/pdf.js`; UI: `js/ui/features.js`, Ansichten Lösungen/Verlauf.
+| Bereich | Dateien | Tests |
+|---|---|---|
+| Plausibilität + Geräte | `js/core/practice.js`, `js/core/devices.js` | `tests/practice.test.js` |
+| Messunsicherheit | `js/core/uncertainty.js` | ebenda |
+| Lösungen (Ampel) | `js/core/solutions.js`, `js/core/expiry.js`, `js/ui/views/solutions.js` | ebenda |
+| Verlauf | `js/core/history.js`, `js/ui/views/history.js` | ebenda |
+| PDF/Text-Export | `js/core/pdf.js`, `js/core/export.js`, `js/ui/pdf-export.js` | ebenda |
+| Backup (gesamt) | `js/core/backup.js` | ebenda |
+| Einbindung | `js/ui/features.js` | im Browser geprüft |
+
+## Offene Punkte / Ideen
+
+- Werte der Startliste (Dichten, Gehalte) und Gerätetoleranzen gegen SDB/Zertifikate prüfen → `VERIFIZIEREN.md`.
+- Test auf dem echten Gerät (Galaxy S24 FE): Installation, Offline-Start, PDF-Download, Backup-Import.
+- Optional: Etikettendruck, Mehrsprachigkeit, Unsicherheit der Molaren Masse/Temperatur.
 
 ## Befehle
 
@@ -47,6 +61,8 @@ Jeder Modus liefert `checks` (Volumina, Massen, Faktoren) – Etappe 3 wertet si
 npm test                      # alle Tests
 node tools/check-substances.js --md
 node tools/verify-pubchem.js  # braucht Internet
+node tools/update-sw.js       # Offline-Dateiliste nach neuen Dateien
+node tools/serve.js           # lokaler Server (Port 8080)
 ```
 
 ## Log
@@ -54,3 +70,4 @@ node tools/verify-pubchem.js  # braucht Internet
 - 2026-10-09: Projekt angelegt (Git-Repo, Ordnerstruktur).
 - 2026-10-09: Etappe 1 fertig, Tests grün, Commit.
 - 2026-10-09: Etappe 2 fertig (Modi + UI + PWA), Tests grün, Commit.
+- 2026-10-09: Etappe 3 fertig (Praxisfunktionen), Tests grün, README, Commit.

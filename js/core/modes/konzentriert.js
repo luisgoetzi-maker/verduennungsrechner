@@ -100,6 +100,7 @@ export function calcKonzentriert(input, settings = {}) {
       R.instruction = `${f.mass(mConc)} ${name} einwiegen und ${f.mass(r.mSol - mConc)} Wasser zugeben.`;
     }
     R.checks.push({ type: 'pipette', L: Vc, label: 'Volumen konz. Lösung' });
+    if (r.V) R.uncertainty = { kind: 'dilution', steps: [{ V1: Vc, V2: r.V }] };
     if (isAcid(sub, name) && w >= 0.1) {
       warn(R, 'Erst das Wasser, dann die Säure! Konzentrierte Säure langsam in vorgelegtes Wasser geben (Wärmeentwicklung).', 'info');
     } else if (sub && sub.cat === 'Base' && w >= 0.2) {

@@ -55,7 +55,8 @@ export function createForm({ db, onChange, textMode }) {
     setState(st) { restoreState(fields, st); if (st) f.substance.setState(st.substance); applySolve(); },
     describe() {
       const s = f.solveFor.get();
-      return ['c1', 'V1', 'c2', 'V2'].filter((k) => k !== s).map((k) => `${k}=${f[k].get().value} ${f[k].get().unit}`).join(', ');
+      const sym = { c1: 'c₁', V1: 'V₁', c2: 'c₂', V2: 'V₂' };
+      return ['c1', 'V1', 'c2', 'V2'].filter((k) => k !== s).map((k) => `${sym[k]} = ${f[k].get().value} ${/[a-zµ%]/i.test(f[k].get().value) ? '' : f[k].get().unit}`.trim()).join(', ');
     },
     substance() { return f.substance.get().substance; },
   };

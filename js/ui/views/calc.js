@@ -59,6 +59,7 @@ export function renderCalc(root, app, modeId) {
       list.push({ label: 'Teilen', icon: ICONS.share, onClick: () => navigator.share({ title: `Verdünnungsrechner – ${mode.title}`, text: resultToText(current, metaFor()) }).catch(() => {}) });
     }
     for (const a of app.hooks.resultActions || []) {
+      if (a.when && !a.when({ R: current, mode })) continue;
       list.push({ label: a.label, icon: a.icon, onClick: () => a.onClick({ R: current, mode, form, meta: metaFor() }) });
     }
     return list;

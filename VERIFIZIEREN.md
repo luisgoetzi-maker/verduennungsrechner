@@ -232,6 +232,19 @@ Erzeugt mit `node tools/check-substances.js --md` – 216 Einträge.
 | ☐ | 13C8-PFOA (interner Standard) | [13C]8HF15O2 | 422,009 |  | Isotopenstandard |
 | ☐ | 13C4-PFOS (interner Standard) | [13C]4C4HF17O3S | 504,095 |  | Isotopenstandard |
 
+## Weitere aus dem Gedächtnis eingetragene Werte (Messunsicherheit)
+
+Toleranzen in `js/core/uncertainty.js` – bitte mit den Angaben der eigenen Geräte (Zertifikat/Norm) vergleichen:
+
+- Messkolben Klasse A (DIN EN ISO 1042), ± mL: 5 mL: 0,025; 10 mL: 0,025; 20 mL: 0,04; 25 mL: 0,04; 50 mL: 0,06; 100 mL: 0,1; 200 mL: 0,15; 250 mL: 0,15; 500 mL: 0,25; 1000 mL: 0,4; 2000 mL: 0,6
+- Vollpipetten Klasse A (DIN EN ISO 648), ± mL: 1 mL: 0,008; 2 mL: 0,01; 5 mL: 0,015; 10 mL: 0,02; 20 mL: 0,03; 25 mL: 0,03; 50 mL: 0,05; 100 mL: 0,08
+- Kolbenhubpipetten (ISO 8655-2), systematisch/zufällig in %: 2 µL: 12/6; 10 µL: 1,2/0,8; 20 µL: 1/0,5; 100 µL: 0,8/0,3; 200 µL: 0,8/0,3; 1000 µL: 0,8/0,3; 5000 µL: 0,8/0,3; 10000 µL: 0,6/0,3
+- Waage: Standardunsicherheit 0,1 mg je Einwaage
+
+## Abgleich mit PubChem
+
+`node tools/verify-pubchem.js` vergleicht die Summenformel jeder CAS-Nummer mit PubChem und schreibt `PUBCHEM-ABGLEICH.md`.
+
 ## Meldungen des Prüfskripts
 
 - [tfa] Trifluoressigsäure: Gehalt 99 % steht nicht im Namen.

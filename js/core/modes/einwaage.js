@@ -183,6 +183,7 @@ export function calcEinwaage(input, settings = {}) {
       R.instruction = `${f.vol(Vs)} ${name} abmessen und mit Lösungsmittel auf ${f.vol(vol)} auffüllen.`;
       R.values = { Vsubstance: Vs, V: vol };
       R.checks.push({ type: 'pipette', L: Vs, label: 'Volumen Stoff' }, { type: 'flask', L: vol });
+      R.uncertainty = { kind: 'dilution', steps: [{ V1: Vs, V2: vol }] };
       return;
     }
 
@@ -224,5 +225,6 @@ export function calcEinwaage(input, settings = {}) {
     }
     R.checks.push({ type: 'mass', g: mWeigh, label: 'Einwaage' });
     if (Vp !== null && liquid) R.checks.push({ type: 'pipette', L: Vp, label: 'Volumen Stoff' });
+    R.uncertainty = { kind: 'weighing', m: mWeigh, V: amount.unit.kind === 'volume' ? r.V : null, Vproduct: liquid ? Vp : null };
   });
 }

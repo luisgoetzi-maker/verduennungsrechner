@@ -20,8 +20,10 @@ export function textTable(headers, rows, rightAlign = []) {
 /** Pipettierplan (Modus D) als Tabellenzeilen. */
 export function seriesRows(table, sig = 4) {
   const u = table.unit;
-  const headers = ['Nr', `Ziel (${u})`, 'aus', 'pipettieren', 'auffüllen auf', `tatsächlich (${u})`];
+  const headers = ['Nr', `Ziel (${u})`, 'aus', 'pipett.', 'auf', `tats. (${u})`];
   if (table.mode === 'serial') headers.push('Rest');
+  const withDevice = table.rows.some((r) => r.device);
+  if (withDevice) headers.push('Gerät');
   headers.push('Hinweis');
   const rows = table.rows.map((r) => {
     const cells = [
@@ -33,6 +35,7 @@ export function seriesRows(table, sig = 4) {
       formatNumber(r.actual, sig),
     ];
     if (table.mode === 'serial') cells.push(r.remaining !== undefined ? formatAuto(r.remaining, 'volume', sig) : '');
+    if (withDevice) cells.push(r.device || '');
     cells.push((r.notes || []).join('; '));
     return cells;
   });

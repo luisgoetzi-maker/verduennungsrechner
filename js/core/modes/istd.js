@@ -78,6 +78,7 @@ export function calcIstd(input, settings = {}) {
       : `Je Probe ${f.vol(Vr)} IS-Lösung vorlegen und auf ${f.vol(V)} auffüllen. Für die Charge mindestens ${f.vol(total)} IS-Lösung bereitstellen.`;
     R.values = { Vis, Vr, actual, total, n, reserve, mode, cUnit: cu };
     R.checks.push({ type: 'pipette', L: Vr, label: 'IS je Probe' });
+    R.uncertainty = { kind: 'spike', steps: [{ V1: Vr, V2: V, fill: mode === 'fill' }] };
 
     if (mode === 'add' && Vr / V > 0.05) {
       warn(R, `Die Zugabe verdünnt die Probe um ${f.n((Vr / (V + Vr)) * 100)} % – bei der Auswertung berücksichtigen oder eine konzentriertere IS-Lösung verwenden.`, 'info');

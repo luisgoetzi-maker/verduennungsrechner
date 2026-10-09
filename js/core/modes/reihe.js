@@ -186,7 +186,7 @@ export function calcReihe(input, settings = {}) {
     R.checks.push({ type: 'flask', L: Vstd });
     R.uncertainty = {
       kind: mode === 'serial' ? 'serial' : 'parallel',
-      steps: rows.map((r) => ({ V1: r.V, V2: r.Vtot, label: String(r.nr) })),
+      steps: rows.map((r) => ({ V1: r.V, V2: r.Vtot, label: String(r.nr), key: r.nr === 'Z' ? 'Z' : `Std ${r.nr}`, src: r.src })),
     };
     if (rows.some((r) => r.V > r.Vtot)) throw new CalcError('Mindestens ein Standard ist mit diesem Volumen nicht herstellbar (Pipettiervolumen > Standardvolumen).', 'targets');
     R.values.kindLabel = KINDS[stock.unit.kind].label;
