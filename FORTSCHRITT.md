@@ -71,3 +71,4 @@ node tools/serve.js           # lokaler Server (Port 8080)
 - 2026-10-09: Etappe 1 fertig, Tests grün, Commit.
 - 2026-10-09: Etappe 2 fertig (Modi + UI + PWA), Tests grün, Commit.
 - 2026-10-09: Etappe 3 fertig (Praxisfunktionen), Tests grün, README, Commit.
+- 2026-10-09: Fix: Leere Seite beim Öffnen per Doppelklick (file://) – Hinweis in index.html, start.bat, serve.js --open; Version 1.0.1.

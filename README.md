@@ -17,6 +17,15 @@ Verdünnungs- und Lösungsrechner für den Laboralltag als Progressive Web App: 
 
 Jedes Ergebnis zeigt den vollständigen Rechenweg mit eingesetzten Zahlen.
 
+## Am PC starten
+
+**Nicht `index.html` per Doppelklick öffnen** – dann blockiert der Browser die Programmteile (JavaScript-Module über `file://`) und es erscheint nur ein Hinweis. Stattdessen:
+
+1. Im Projektordner **`start.bat`** doppelklicken. Es öffnet sich ein Konsolenfenster (offen lassen) und der Browser mit <http://localhost:8080/>.
+2. Zum Beenden das Konsolenfenster schließen.
+
+Alternativ im Terminal: `node tools/serve.js --open`.
+
 ## Auf dem Handy installieren (Samsung Galaxy S24 FE, Chrome)
 
 Für Offline-Betrieb und Installation braucht Chrome eine **sichere Adresse** (`https://…` oder `http://localhost`). Deshalb gibt es zwei Wege:
@@ -46,7 +55,7 @@ Voraussetzung: Node.js am PC (ist installiert, v24).
 node tools/serve.js
 ```
 
-Der Server zeigt die Adressen an, z. B. `http://192.168.178.23:8080/`. PC und Handy müssen im selben WLAN sein (ggf. in der Windows-Firewall „Node.js“ für private Netzwerke zulassen).
+(oder `start.bat` doppelklicken). Der Server zeigt die Adressen an, z. B. `http://192.168.178.23:8080/`. PC und Handy müssen im selben WLAN sein (ggf. in der Windows-Firewall „Node.js“ für private Netzwerke zulassen).
 
 - **Nur ansehen/testen:** Adresse am Handy in Chrome öffnen. Die App funktioniert, aber **ohne Offline-Modus und ohne Installation**, weil `http://192.168…` keine sichere Adresse ist.
 - **Mit Offline-Modus und Installation (USB):** Am Handy Entwickleroptionen + USB-Debugging aktivieren, per USB verbinden, am PC in Chrome `chrome://inspect/#devices` öffnen → **Port forwarding…** → Port `8080` an `localhost:8080` → Haken „Enable port forwarding“. Dann am Handy `http://localhost:8080` öffnen – jetzt gilt die Adresse als sicher und die App lässt sich installieren.

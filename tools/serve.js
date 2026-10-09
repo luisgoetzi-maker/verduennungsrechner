@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Minimaler statischer Webserver (ohne Abhängigkeiten) zum Testen im WLAN.
-// Aufruf: node tools/serve.js [Port]     (Standard-Port 8080)
+// Aufruf: node tools/serve.js [Port] [--open]   (Standard-Port 8080; --open öffnet den Browser)
 //
 // Hinweis: Der Service Worker (Offline-Betrieb, Installation als App) läuft nur
 // auf "sicheren" Adressen: https://… oder http://localhost. Über die
@@ -10,11 +10,20 @@
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { networkInterfaces } from 'node:os';
+import { exec } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, normalize, extname, sep } from 'node:path';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const port = Number(process.argv[2]) || 8080;
+const port = Number(process.argv.slice(2).find((a) => /^\d+$/.test(a))) || 8080;
+const openBrowser = process.argv.includes('--open');
+const url = `http://localhost:${port}/`;
+
+function openUrl() {
+  if (!openBrowser) return;
+  const cmd = process.platform === 'win32' ? `start "" "${url}"` : process.platform === 'darwin' ? `open "${url}"` : `xdg-open "${url}"`;
+  exec(cmd, () => {});
+}
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -47,6 +56,17 @@ const server = createServer(async (req, res) => {
   }
 });
 
+server.on('error', (e) => {
+  if (e.code === 'EADDRINUSE') {
+    console.log(`Port ${port} ist schon belegt – läuft der Verdünnungsrechner bereits? Adresse: ${url}`);
+    openUrl();
+    setTimeout(() => process.exit(1), 500);
+  } else {
+    console.error(e);
+    process.exit(1);
+  }
+});
+
 server.listen(port, '0.0.0.0', () => {
   console.log(`Verdünnungsrechner läuft:`);
   console.log(`  am PC:      http://localhost:${port}/`);
@@ -55,5 +75,6 @@ server.listen(port, '0.0.0.0', () => {
       if (a.family === 'IPv4' && !a.internal) console.log(`  im WLAN:    http://${a.address}:${port}/   (ohne Offline-Modus, siehe README)`);
     }
   }
-  console.log('Beenden mit Strg+C.');
+  console.log('Beenden mit Strg+C (oder dieses Fenster schließen).');
+  openUrl();
 });

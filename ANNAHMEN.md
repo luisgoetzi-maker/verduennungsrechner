@@ -67,3 +67,7 @@ Hier stehen alle Annahmen, die ich bei unklaren Anforderungen getroffen habe –
 43. **PDF-Export:** eigener kleiner PDF-Erzeuger (A4, Schrift Courier, damit Tabellen ausgerichtet bleiben, ohne externe Bibliothek). Weil PDF-Standardschriften keine hochgestellten Zeichen kennen, steht dort `10^-8` statt `10⁻⁸`, `c2` statt `c₂`, `rho` statt `ρ`. Alternativ „Drucken“ → „Als PDF speichern“ von Chrome (Druckansicht ohne Menüs). „Kopieren“ liefert den Text zum Einfügen ins elektronische Laborjournal.
 44. **Backup:** Die Backup-Datei enthält Stoffe, Lösungen, Verlauf und Einstellungen.
 45. **Git-Autor:** Weil auf dem PC kein globaler Git-Name eingerichtet war, habe ich im Repository lokal `luisg` / `(GitHub-noreply-Adresse)` gesetzt (nur für dieses Projekt).
+
+## Nachtrag
+
+46. **Start am PC:** Die App muss über einen (lokalen) Webserver geöffnet werden, weil Browser JavaScript-Module beim direkten Öffnen der Datei (`file://`) blockieren. Dafür gibt es `start.bat` (startet `tools/serve.js` und öffnet den Browser). Wird `index.html` trotzdem direkt geöffnet, zeigt die Seite einen Hinweis statt einer leeren Fläche.

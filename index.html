@@ -29,8 +29,32 @@
     <h1>Verdünnungsrechner</h1>
     <span id="net" class="badge">offline-fähig</span>
   </header>
-  <main id="view"></main>
+  <main id="view">
+    <!-- Wird beim Start der App ersetzt. Bleibt es stehen, konnte JavaScript nicht geladen werden. -->
+    <section class="card" id="boot-msg" style="margin-top:16px">
+      <h2>App wird geladen …</h2>
+      <p id="boot-hint" class="small muted"></p>
+    </section>
+  </main>
   <nav class="bottomnav" id="nav" aria-label="Hauptnavigation"></nav>
   <noscript><p style="padding:16px">Bitte JavaScript aktivieren.</p></noscript>
+  <script>
+    (function () {
+      var hint = document.getElementById('boot-hint');
+      if (!hint) return;
+      if (location.protocol === 'file:') {
+        document.querySelector('#boot-msg h2').textContent = 'Bitte nicht direkt als Datei öffnen';
+        hint.innerHTML = 'Beim Öffnen per Doppelklick (Adresse beginnt mit <code>file://</code>) blockiert der Browser die Programmteile der App. '
+          + 'Bitte im Projektordner <strong>start.bat</strong> doppelklicken – das startet einen kleinen lokalen Server und öffnet die App unter '
+          + '<a href="http://localhost:8080/">http://localhost:8080/</a>. Alternativ im Terminal: <code>node tools/serve.js</code>.';
+        return;
+      }
+      setTimeout(function () {
+        if (document.getElementById('boot-msg')) {
+          hint.textContent = 'Die App startet nicht. Bitte die Seite neu laden. Hilft das nicht: Browser aktualisieren bzw. Website-Daten (Cache) für diese Adresse löschen.';
+        }
+      }, 5000);
+    })();
+  </script>
 </body>
 </html>

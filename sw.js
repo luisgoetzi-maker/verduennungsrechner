@@ -3,7 +3,7 @@
 // in js/ui/version.js), damit Geräte die neue Version laden.
 // Dateiliste aktualisieren: node tools/update-sw.js
 
-const CACHE_VERSION = 'vr-1.0.0';
+const CACHE_VERSION = 'vr-1.0.1';
 
 const ASSETS = [
   // ASSETS-START
