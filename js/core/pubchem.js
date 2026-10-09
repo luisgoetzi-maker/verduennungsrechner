@@ -3,12 +3,14 @@
 // der Rest der App unverändert. Ergebnisse werden nie automatisch
 // übernommen, sondern zur Bestätigung angezeigt.
 
-import { validateCAS } from './substance-db.js';
-import { tryParseFormula, elementCounts } from './formula.js';
+(function () {
+  'use strict';
+  const { validateCAS } = VR.use('core/substance-db.js');
+  const { tryParseFormula, elementCounts } = VR.use('core/formula.js');
 
 const BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug';
 
-export class PubChemError extends Error {
+class PubChemError extends Error {
   constructor(message, code) {
     super(message);
     this.name = 'PubChemError';
@@ -38,7 +40,7 @@ async function fetchJSON(url, fetchFn, timeoutMs) {
  * Sucht einen Stoff bei PubChem (Name, Synonym oder CAS-Nummer).
  * @returns {Promise<Array<{cid:number, title:string, formula:string, mw:number, iupac:string, cas:string|null, formulaOk:boolean}>>}
  */
-export async function lookupPubChem(query, { fetchFn = globalThis.fetch, timeoutMs = 12000, maxResults = 5, withCAS = true } = {}) {
+async function lookupPubChem(query, { fetchFn = globalThis.fetch, timeoutMs = 12000, maxResults = 5, withCAS = true } = {}) {
   const q = String(query ?? '').trim();
   if (!q) throw new PubChemError('Bitte einen Namen oder eine CAS-Nummer eingeben.', 'empty');
   if (typeof fetchFn !== 'function') throw new PubChemError('Online-Abfrage nicht verfügbar.', 'offline');
@@ -74,7 +76,7 @@ export async function lookupPubChem(query, { fetchFn = globalThis.fetch, timeout
 }
 
 /** Vergleicht zwei Formeln nach Elementanzahl (Isotope zählen zu ihrem Element). */
-export function sameComposition(formulaA, formulaB) {
+function sameComposition(formulaA, formulaB) {
   const a = tryParseFormula(formulaA);
   const b = tryParseFormula(formulaB);
   if (!a.ok || !b.ok) return false;
@@ -84,3 +86,6 @@ export function sameComposition(formulaA, formulaB) {
   for (const k of keys) if (Math.abs((ca[k] || 0) - (cb[k] || 0)) > 1e-9) return false;
   return true;
 }
+
+  VR.provide('core/pubchem.js', { PubChemError, lookupPubChem, sameComposition });
+}());

@@ -1,9 +1,11 @@
 // Wiederverwendbare Eingabe-Bausteine.
 
-import { h, clear, ICONS } from './dom.js';
-import { parseQuantity, UNIT_LISTS, KINDS, UnitError } from '../core/units.js';
-import { formatNumber } from '../core/numbers.js';
-import { tryParseFormula } from '../core/formula.js';
+(function () {
+  'use strict';
+  const { h, clear, ICONS } = VR.use('ui/dom.js');
+  const { parseQuantity, UNIT_LISTS, KINDS, UnitError } = VR.use('core/units.js');
+  const { formatNumber } = VR.use('core/numbers.js');
+  const { tryParseFormula } = VR.use('core/formula.js');
 
 let uid = 0;
 const nextId = (p) => `${p}-${++uid}`;
@@ -31,7 +33,7 @@ function fieldApi(wrap) {
  * Mengenfeld: Zahl (Freitext, auch "5 µg/mL") + Einheitenauswahl.
  * @returns {{el, get, set, input, select, highlight, invalid, show, setDisabled}}
  */
-export function quantityField({ name, label, kinds, units, unit, value = '', placeholder = '', help = '', textMode = false, onInput }) {
+function quantityField({ name, label, kinds, units, unit, value = '', placeholder = '', help = '', textMode = false, onInput }) {
   const id = nextId(name || 'q');
   const list = units || kinds.flatMap((k) => UNIT_LISTS[k]);
   const input = h('input', {
@@ -118,7 +120,7 @@ export function quantityField({ name, label, kinds, units, unit, value = '', pla
 }
 
 /** Zahlenfeld mit Einheit als Text (z. B. "%", "g/mL"). */
-export function numberField({ name, label, value = '', suffix = '', placeholder = '', help = '', onInput, integer = false }) {
+function numberField({ name, label, value = '', suffix = '', placeholder = '', help = '', onInput, integer = false }) {
   const id = nextId(name || 'n');
   const input = h('input', { type: 'text', id, inputmode: integer ? 'numeric' : 'decimal', autocomplete: 'off', placeholder, value });
   const wrap = h('div', { class: 'field', dataset: { field: name } },
@@ -135,7 +137,7 @@ export function numberField({ name, label, value = '', suffix = '', placeholder 
   };
 }
 
-export function textField({ name, label, value = '', placeholder = '', help = '', onInput, multiline = false, inputmode = 'text' }) {
+function textField({ name, label, value = '', placeholder = '', help = '', onInput, multiline = false, inputmode = 'text' }) {
   const id = nextId(name || 't');
   const input = multiline
     ? h('textarea', { id, placeholder, rows: 3, autocapitalize: 'off', spellcheck: 'false', inputmode }, value)
@@ -145,7 +147,7 @@ export function textField({ name, label, value = '', placeholder = '', help = ''
   return { el: wrap, input, get: () => input.value, set: (v) => { input.value = v ?? ''; }, ...fieldApi(wrap) };
 }
 
-export function selectField({ name, label, options, value, onInput, help = '' }) {
+function selectField({ name, label, options, value, onInput, help = '' }) {
   const id = nextId(name || 's');
   const select = h('select', { id }, options.map((o) => h('option', { value: o.value }, o.label)));
   if (value !== undefined) select.value = value;
@@ -155,7 +157,7 @@ export function selectField({ name, label, options, value, onInput, help = '' })
 }
 
 /** Umschalter mit mehreren Optionen. */
-export function segmented({ name, label, options, value, onInput }) {
+function segmented({ name, label, options, value, onInput }) {
   let current = value ?? options[0].value;
   const buttons = options.map((o) => h('button', {
     type: 'button', 'aria-pressed': String(o.value === current),
@@ -171,7 +173,7 @@ export function segmented({ name, label, options, value, onInput }) {
   return { el: wrap, get: () => current, set, ...fieldApi(wrap) };
 }
 
-export function checkField({ name, label, checked = false, onInput }) {
+function checkField({ name, label, checked = false, onInput }) {
   const input = h('input', { type: 'checkbox', checked });
   const wrap = h('div', { class: 'field', dataset: { field: name } }, h('label', { class: 'check' }, input, h('span', {}, label)));
   input.addEventListener('change', () => onInput && onInput());
@@ -179,7 +181,7 @@ export function checkField({ name, label, checked = false, onInput }) {
 }
 
 /** Aufklappbarer Bereich "Weitere Angaben". */
-export function moreSection(title, children, open = false) {
+function moreSection(title, children, open = false) {
   const d = h('details', { class: 'more', open }, h('summary', {}, title), h('div', { class: 'inner' }, children));
   return d;
 }
@@ -193,7 +195,7 @@ function fmtM(m) {
  * zeigen alle Varianten mit Formel und Molarer Masse.
  * Alternativ kann direkt eine Summenformel eingegeben werden.
  */
-export function substancePicker({ name = 'substance', label = 'Stoff', db, onInput, placeholder = 'Name, Formel oder CAS-Nummer …', help = '' }) {
+function substancePicker({ name = 'substance', label = 'Stoff', db, onInput, placeholder = 'Name, Formel oder CAS-Nummer …', help = '' }) {
   const id = nextId(name);
   let selected = null; // {substance} | {formula}
   const input = h('input', { type: 'search', id, placeholder, autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', enterkeyhint: 'search' });
@@ -295,3 +297,98 @@ export function substancePicker({ name = 'substance', label = 'Stoff', db, onInp
     ...fieldApi(wrap),
   };
 }
+
+/**
+ * Liste weiterer Stoffe (＋) für Formulare, in denen eine Lösung mehrere
+ * gelöste Stoffe enthält. Jede Zeile: Stoffauswahl + frei definierbare Felder.
+ * @param {object} o
+ *   db, onChange, textMode
+ *   fields    [{key, type:'quantity'|'number', label, kinds, units, unit, placeholder, suffix}]
+ *   template  () => Startwerte einer neuen Zeile, z. B. {conc: {value:'', unit:'µM'}}
+ *   addLabel  Beschriftung des ＋-Knopfs
+ *   firstNr   Nummer der ersten weiteren Zeile (Standard 2)
+ *   onCount   (anzahl) => void – z. B. um "Stoff 1" einzublenden
+ */
+function extraSubstanceList({ db, onChange, textMode, fields, template = () => ({}), addLabel = 'Weiteren Stoff hinzufügen', firstNr = 2, onCount, rowTitle = 'Stoff' }) {
+  let rows = [];
+  const list = h('div');
+  const renumber = () => {
+    rows.forEach((r, i) => { r.title.textContent = `${rowTitle} ${i + firstNr}`; });
+    if (onCount) onCount(rows.length);
+  };
+  const createRow = (state) => {
+    const r = { f: {} };
+    r.picker = substancePicker({ name: 'formula', label: 'Stoff (Name, Formel oder CAS)', db, onInput: onChange });
+    for (const fd of fields) {
+      r.f[fd.key] = fd.type === 'number'
+        ? numberField({ name: fd.key, label: fd.label, suffix: fd.suffix || '', placeholder: fd.placeholder || '', onInput: onChange })
+        : quantityField({ name: fd.key, label: fd.label, kinds: fd.kinds, units: fd.units, unit: fd.unit, placeholder: fd.placeholder || '', textMode, onInput: onChange });
+    }
+    r.title = h('strong', { class: 'grow' }, rowTitle);
+    const grid = h('div', {}, Object.values(r.f).map((x) => x.el));
+    r.el = h('div', { class: 'comp' },
+      h('div', { class: 'row', style: { alignItems: 'center', marginBottom: '8px' } }, r.title,
+        h('button', { type: 'button', class: 'icon-btn', 'aria-label': `${rowTitle} entfernen`, html: ICONS.trash, onclick: () => remove(r) })),
+      r.picker.el, grid);
+    const st = state || template();
+    if (st.substance) r.picker.setState(st.substance);
+    for (const fd of fields) if (st[fd.key] !== undefined) r.f[fd.key].set(st[fd.key]);
+    return r;
+  };
+  const add = (state = null) => {
+    const r = createRow(state);
+    rows.push(r);
+    list.append(r.el);
+    renumber();
+    return r;
+  };
+  const remove = (r) => {
+    rows = rows.filter((x) => x !== r);
+    r.el.remove();
+    renumber();
+    onChange();
+  };
+  const button = h('button', {
+    type: 'button', class: 'btn add-btn', 'aria-label': addLabel,
+    onclick: () => {
+      const r = add();
+      r.el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      const i = r.el.querySelector('input');
+      if (i) i.focus();
+      onChange();
+    },
+  }, h('span', { html: ICONS.plus, style: { display: 'contents' } }), addLabel);
+  const el = h('div', {}, list, button);
+  return {
+    el,
+    collect() {
+      return rows.map((r) => {
+        const sel = r.picker.get();
+        const out = { substance: sel.substance, formula: sel.formula };
+        for (const fd of fields) out[fd.key] = r.f[fd.key].get();
+        return out;
+      });
+    },
+    getState() {
+      return rows.map((r) => {
+        const out = { substance: r.picker.getState() };
+        for (const fd of fields) out[fd.key] = r.f[fd.key].get();
+        return out;
+      });
+    },
+    setState(states) {
+      rows.forEach((r) => r.el.remove());
+      rows = [];
+      (Array.isArray(states) ? states : []).forEach((s) => add(s));
+      renumber();
+    },
+    names() {
+      return rows.map((r) => { const s = r.picker.get(); return s.substance ? s.substance.name : s.formula || ''; }).filter(Boolean);
+    },
+    count() { return rows.length; },
+    show(on) { el.classList.toggle('hidden', !on); },
+  };
+}
+
+  VR.provide('ui/components.js', { quantityField, numberField, textField, selectField, segmented, checkField, moreSection, substancePicker, extraSubstanceList });
+}());

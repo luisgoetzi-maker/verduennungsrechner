@@ -1,7 +1,9 @@
 // Lösungsverwaltung: hergestellte Lösungen mit Ablaufdatum (Ampel).
 
-import { expiryStatus } from './expiry.js';
-import { normalizeSearch } from './substance-db.js';
+(function () {
+  'use strict';
+  const { expiryStatus } = VR.use('core/expiry.js');
+  const { normalizeSearch } = VR.use('core/substance-db.js');
 
 const KEY = 'solutions';
 
@@ -11,7 +13,7 @@ function newId() {
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-export function cleanSolution(d) {
+function cleanSolution(d) {
   const s = {
     id: d.id ? String(d.id) : undefined,
     name: String(d.name ?? '').trim(),
@@ -30,14 +32,14 @@ export function cleanSolution(d) {
   return s;
 }
 
-export function validateSolution(s) {
+function validateSolution(s) {
   const errors = [];
   if (!s.name) errors.push('Name fehlt.');
   if (s.made && s.expires && s.expires < s.made) errors.push('Das Ablaufdatum liegt vor dem Herstelldatum.');
   return errors;
 }
 
-export class SolutionStore {
+class SolutionStore {
   constructor(storage) {
     this.storage = storage;
   }
@@ -117,3 +119,6 @@ export class SolutionStore {
     return report;
   }
 }
+
+  VR.provide('core/solutions.js', { cleanSolution, validateSolution, SolutionStore });
+}());

@@ -3,6 +3,9 @@
 // daher bleiben Tabellen ausgerichtet). Zeichensatz: WinAnsi – Zeichen
 // außerhalb davon (z. B. ⁻⁸, ρ) werden lesbar umgeschrieben (^-8, rho).
 
+(function () {
+  'use strict';
+
 const PAGE_W = 595.28; // A4 in pt
 const PAGE_H = 841.89;
 const MARGIN_X = 46;
@@ -11,7 +14,7 @@ const MARGIN_BOTTOM = 50;
 const FONT_SIZE = 9.2;
 const LEADING = 12.4;
 const CHAR_W = 0.6 * FONT_SIZE;
-export const LINE_CHARS = Math.floor((PAGE_W - 2 * MARGIN_X) / CHAR_W);
+const LINE_CHARS = Math.floor((PAGE_W - 2 * MARGIN_X) / CHAR_W);
 
 const SUP = { '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4', '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9', '⁺': '+', '⁻': '-' };
 const SUB = { '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4', '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9' };
@@ -24,7 +27,7 @@ const MAP = {
 const WIN = { '€': 0x80, '‚': 0x82, '„': 0x84, '…': 0x85, '‰': 0x89, '‹': 0x8b, '‘': 0x91, '’': 0x92, '“': 0x93, '”': 0x94, '•': 0x95, '–': 0x96, '—': 0x97, '›': 0x9b };
 
 /** Text in WinAnsi-taugliche Zeichen umschreiben. */
-export function toWinAnsiText(str) {
+function toWinAnsiText(str) {
   let s = String(str);
   s = s.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]+/g, (m) => `^${[...m].map((c) => SUP[c]).join('')}`);
   s = s.replace(/[₀₁₂₃₄₅₆₇₈₉]/g, (c) => SUB[c]);
@@ -50,7 +53,7 @@ function escapePdf(s) {
 }
 
 /** Bricht lange Zeilen um (Einrückung bleibt erhalten). */
-export function wrapLines(lines, width = LINE_CHARS) {
+function wrapLines(lines, width = LINE_CHARS) {
   const out = [];
   for (const raw of lines) {
     const line = toWinAnsiText(raw).replace(/\t/g, '  ');
@@ -78,7 +81,7 @@ export function wrapLines(lines, width = LINE_CHARS) {
  * @param {{title?:string, footer?:string}} opts  title wird fett gesetzt (erste Zeile)
  * @returns {Uint8Array}
  */
-export function makePdf(lines, { title = '', footer = '' } = {}) {
+function makePdf(lines, { title = '', footer = '' } = {}) {
   const body = wrapLines(lines);
   const perPage = Math.floor((PAGE_H - MARGIN_TOP - MARGIN_BOTTOM) / LEADING) - (title ? 2 : 0);
   const pages = [];
@@ -122,3 +125,6 @@ export function makePdf(lines, { title = '', footer = '' } = {}) {
   for (let i = 0; i < pdf.length; i++) bytes[i] = pdf.charCodeAt(i) & 0xff;
   return bytes;
 }
+
+  VR.provide('core/pdf.js', { LINE_CHARS, toWinAnsiText, wrapLines, makePdf });
+}());

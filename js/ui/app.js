@@ -1,19 +1,22 @@
 // Einstiegspunkt der App: Speicher, Datenbank, Einstellungen, Navigation,
 // Service Worker.
 
-import { h, clear, toast, ICONS } from './dom.js';
-import { createLocalStorage } from '../core/storage.js';
-import { SubstanceDB } from '../core/substance-db.js';
-import { loadSettings, saveSettings } from '../core/settings.js';
-import { renderCalc } from './views/calc.js';
-import { renderSubstances } from './views/substances.js';
-import { renderSettings } from './views/settings.js';
-import { MODE_BY_ID } from '../core/modes/index.js';
-import { APP_VERSION } from './version.js';
+(function () {
+  'use strict';
+  const { h, clear, toast, ICONS } = VR.use('ui/dom.js');
+  const { createLocalStorage } = VR.use('core/storage.js');
+  const { SubstanceDB } = VR.use('core/substance-db.js');
+  const { loadSettings, saveSettings } = VR.use('core/settings.js');
+  const { renderCalc } = VR.use('ui/views/calc.js');
+  const { renderSubstances } = VR.use('ui/views/substances.js');
+  const { renderSettings } = VR.use('ui/views/settings.js');
+  const { MODE_BY_ID } = VR.use('core/modes/index.js');
+  const { APP_VERSION } = VR.use('ui/version.js');
+  const { install: installFeatures } = VR.use('ui/features.js');
 
 const storage = createLocalStorage('vr.');
 
-export const app = {
+const app = {
   storage,
   db: new SubstanceDB(storage),
   settings: loadSettings(storage),
@@ -107,7 +110,7 @@ function showUpdateBanner(worker) {
 }
 
 function registerServiceWorker() {
-  if (!('serviceWorker' in navigator)) return;
+  if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing) return;
@@ -126,7 +129,7 @@ function registerServiceWorker() {
   }).catch((e) => console.warn('Service Worker nicht registriert:', e));
 }
 
-export function start() {
+function start() {
   applyTheme();
   window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', applyTheme);
   renderNav();
@@ -143,8 +146,13 @@ export function start() {
   storage.set('appVersion', APP_VERSION);
 }
 
-// Erweiterungen (Etappe 3) laden, dann starten
-import('./features.js')
-  .then((m) => m.install(app))
-  .catch((e) => { if (!/features\.js/.test(String(e))) console.error(e); })
-  .finally(start);
+// Erweiterungen (Praxisfunktionen) einhängen, dann starten
+try {
+  installFeatures(app);
+} catch (e) {
+  console.error(e);
+}
+start();
+
+  VR.provide('ui/app.js', { app, start });
+}());

@@ -3,7 +3,10 @@
 //
 // Schnittstelle: get(key) -> Wert|null, set(key, value), remove(key), keys()
 
-export function createMemoryStorage(initial = {}) {
+(function () {
+  'use strict';
+
+function createMemoryStorage(initial = {}) {
   const data = new Map(Object.entries(initial).map(([k, v]) => [k, JSON.stringify(v)]));
   return {
     get(key) {
@@ -26,7 +29,7 @@ export function createMemoryStorage(initial = {}) {
  * localStorage nicht verfügbar ist (z. B. privater Modus); `persistent`
  * gibt an, ob dauerhaft gespeichert wird.
  */
-export function createLocalStorage(prefix = 'vr.') {
+function createLocalStorage(prefix = 'vr.') {
   let ls = null;
   try {
     ls = globalThis.localStorage;
@@ -75,3 +78,6 @@ export function createLocalStorage(prefix = 'vr.') {
     },
   };
 }
+
+  VR.provide('core/storage.js', { createMemoryStorage, createLocalStorage });
+}());

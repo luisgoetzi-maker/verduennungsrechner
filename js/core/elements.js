@@ -7,6 +7,9 @@
 // Standardatomgewicht; dort steht die Massenzahl des langlebigsten Isotops
 // (noStd = true) – der Parser gibt dann eine Warnung aus.
 
+(function () {
+  'use strict';
+
 const RAW = [
   // [Ordnungszahl, Symbol, Name, Masse, ohne Standardatomgewicht]
   [1, 'H', 'Wasserstoff', 1.008],
@@ -130,14 +133,14 @@ const RAW = [
 ];
 
 /** Symbol -> { z, symbol, name, mass, noStd } */
-export const ELEMENTS = Object.freeze(Object.fromEntries(
+const ELEMENTS = Object.freeze(Object.fromEntries(
   RAW.map(([z, symbol, name, mass, noStd]) => [symbol, Object.freeze({ z, symbol, name, mass, noStd: !!noStd })]),
 ));
 
 // Isotopenmassen (g/mol, AME2020) für isotopenmarkierte Verbindungen,
 // z. B. [13C]-markierte interne Standards oder deuterierte Lösungsmittel.
 // Schlüssel: "<Massenzahl><Symbol>".
-export const ISOTOPES = Object.freeze({
+const ISOTOPES = Object.freeze({
   '1H': 1.00782503223,
   '2H': 2.01410177812,
   '3H': 3.0160492779,
@@ -173,8 +176,11 @@ export const ISOTOPES = Object.freeze({
 });
 
 // Sonderzeichen für Wasserstoffisotope: D = Deuterium (2H), T = Tritium (3H).
-export const ISOTOPE_ALIASES = Object.freeze({ D: '2H', T: '3H' });
+const ISOTOPE_ALIASES = Object.freeze({ D: '2H', T: '3H' });
 
-export function isElementSymbol(sym) {
+function isElementSymbol(sym) {
   return Object.prototype.hasOwnProperty.call(ELEMENTS, sym);
 }
+
+  VR.provide('core/elements.js', { ELEMENTS, ISOTOPES, ISOTOPE_ALIASES, isElementSymbol });
+}());

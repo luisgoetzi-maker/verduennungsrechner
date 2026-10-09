@@ -8,26 +8,28 @@
 // So kann die Startliste mit App-Updates verbessert werden, ohne eigene
 // Änderungen zu überschreiben.
 
-import { SEED_SUBSTANCES } from './substances-seed.js';
-import { tryParseFormula } from './formula.js';
+(function () {
+  'use strict';
+  const { SEED_SUBSTANCES } = VR.use('core/substances-seed.js');
+  const { tryParseFormula } = VR.use('core/formula.js');
 
 const KEY_USER = 'substances.user';
 const KEY_OVERRIDES = 'substances.overrides';
 const KEY_HIDDEN = 'substances.hidden';
 
-export const CATEGORIES = [
+const CATEGORIES = [
   'Säure', 'Base', 'Salz', 'Puffer', 'Urtiter', 'Lösungsmittel', 'Komplexbildner', 'Indikator',
   'Oxidationsmittel', 'Reduktionsmittel', 'PFAS', 'Isotopenstandard', 'Sonstige',
 ];
 
 // Gespeicherte Felder eines Stoffeintrags
-export const FIELDS = [
+const FIELDS = [
   'id', 'name', 'aliases', 'formula', 'cas', 'cat', 'state', 'density', 'purity', 'z',
   'notes', 'molarMass', 'opened', 'expires',
 ];
 
 /** Prüft eine CAS-Nummer (Format und Prüfziffer). */
-export function validateCAS(cas) {
+function validateCAS(cas) {
   const s = String(cas ?? '').trim();
   if (!s) return { valid: true, empty: true };
   const m = s.match(/^(\d{2,7})-(\d{2})-(\d)$/);
@@ -41,7 +43,7 @@ export function validateCAS(cas) {
 }
 
 /** Vereinheitlicht Text für die Suche (Umlaute, Groß/Klein, Sonderzeichen). */
-export function normalizeSearch(s) {
+function normalizeSearch(s) {
   return String(s ?? '')
     .toLowerCase()
     .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
@@ -68,7 +70,7 @@ function num(v) {
 }
 
 /** Bereinigt einen Eintrag (nur bekannte Felder, Typen). */
-export function cleanEntry(data) {
+function cleanEntry(data) {
   const e = {};
   e.id = data.id ? String(data.id) : undefined;
   e.name = String(data.name ?? '').trim();
@@ -95,7 +97,7 @@ export function cleanEntry(data) {
  * Prüft einen Eintrag.
  * @returns {{errors: string[], warnings: string[]}}
  */
-export function validateSubstance(entry) {
+function validateSubstance(entry) {
   const errors = [];
   const warnings = [];
   if (!entry.name || !String(entry.name).trim()) errors.push('Name fehlt.');
@@ -127,7 +129,7 @@ export function validateSubstance(entry) {
 }
 
 /** Ergänzt berechnete Felder (Molare Masse, Anzeigeformel, Hydratwasser). */
-export function enrich(entry, source = 'user', modified = false) {
+function enrich(entry, source = 'user', modified = false) {
   const out = { ...entry, source, modified };
   out.mwCalc = null;
   out.formulaError = null;
@@ -168,7 +170,7 @@ function sameContent(a, b) {
   return JSON.stringify(FIELDS.map((k) => ca[k] ?? null)) === JSON.stringify(FIELDS.map((k) => cb[k] ?? null));
 }
 
-export class SubstanceDB {
+class SubstanceDB {
   constructor(storage, seed = SEED_SUBSTANCES) {
     this.storage = storage;
     this.seed = seed;
@@ -387,3 +389,6 @@ export class SubstanceDB {
     this._invalidate();
   }
 }
+
+  VR.provide('core/substance-db.js', { CATEGORIES, FIELDS, validateCAS, normalizeSearch, cleanEntry, validateSubstance, enrich, SubstanceDB });
+}());

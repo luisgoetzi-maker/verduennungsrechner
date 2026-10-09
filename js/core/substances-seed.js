@@ -18,9 +18,12 @@
 //   z        Wertigkeit für Normalität (Säure-Base); leer = reaktionsabhängig
 //   notes    Hinweise
 
+(function () {
+  'use strict';
+
 const CONC = 'Dichte bei 20 °C. Gehalt laut Etikett/Analysenzertifikat prüfen.';
 
-export const SEED_SUBSTANCES = [
+const SEED_SUBSTANCES = [
   // ---------------------------------------------------------------- Säuren (konzentriert, Handelsform)
   { id: 'hcl-37', name: 'Salzsäure 37 %', aliases: ['HCl', 'Salzsäure konz.', 'Chlorwasserstoffsäure', 'Hydrochloric acid'], formula: 'HCl', cas: '7647-01-0', cat: 'Säure', state: 'l', density: 1.19, purity: 37, z: 1, notes: CONC },
   { id: 'hcl-32', name: 'Salzsäure 32 %', aliases: ['HCl', 'Chlorwasserstoffsäure'], formula: 'HCl', cas: '7647-01-0', cat: 'Säure', state: 'l', density: 1.16, purity: 32, z: 1, notes: CONC },
@@ -255,3 +258,6 @@ export const SEED_SUBSTANCES = [
   { id: '13c8-pfoa', name: '13C8-PFOA (interner Standard)', aliases: ['M8PFOA', 'PFOA-13C8'], formula: '[13C]8HF15O2', cat: 'Isotopenstandard', state: 's', notes: 'Markierung laut Zertifikat prüfen.' },
   { id: '13c4-pfos', name: '13C4-PFOS (interner Standard)', aliases: ['MPFOS', 'PFOS-13C4'], formula: '[13C]4C4HF17O3S', cat: 'Isotopenstandard', state: 's', notes: 'Häufig als Na- oder K-Salz geliefert – Formel ggf. anpassen.' },
 ];
+
+  VR.provide('core/substances-seed.js', { SEED_SUBSTANCES });
+}());

@@ -1,12 +1,14 @@
 // Ansicht "Einstellungen": Darstellung, Plausibilität, Geräte, Daten.
 
-import { h, toast, download, pickFile, confirmBox, ICONS } from '../dom.js';
-import { numberField, selectField, segmented, checkField, textField } from '../components.js';
-import { DEFAULT_SETTINGS } from '../../core/settings.js';
-import { buildBackup, inspectBackup, applyBackup } from '../../core/backup.js';
-import { APP_VERSION } from '../version.js';
+(function () {
+  'use strict';
+  const { h, toast, download, pickFile, confirmBox, ICONS } = VR.use('ui/dom.js');
+  const { numberField, selectField, segmented, checkField, textField } = VR.use('ui/components.js');
+  const { DEFAULT_SETTINGS } = VR.use('core/settings.js');
+  const { buildBackup, inspectBackup, applyBackup } = VR.use('core/backup.js');
+  const { APP_VERSION } = VR.use('ui/version.js');
 
-export function renderSettings(root, app) {
+function renderSettings(root, app) {
   const s = app.settings;
   const save = (patch) => {
     app.setSettings({ ...app.settings, ...patch });
@@ -104,3 +106,6 @@ export function renderSettings(root, app) {
       h('button', { type: 'button', class: 'btn small', onclick: () => { app.setSettings({ ...DEFAULT_SETTINGS }); toast('Standard-Einstellungen wiederhergestellt.'); app.rerender(); } }, 'Einstellungen zurücksetzen')),
   );
 }
+
+  VR.provide('ui/views/settings.js', { renderSettings });
+}());

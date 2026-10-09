@@ -1,7 +1,9 @@
 // Modus B: Verdünnung c1·V1 = c2·V2 – drei Größen eingeben, die vierte wird berechnet.
 
-import { CONC_KINDS, convert, parseUnit, autoVolume } from '../units.js';
-import { runCalc, readQuantity, readNumber, formatter, step, note, warn, addHint, CalcError, MissingParam, resolveMolarMass } from './common.js';
+(function () {
+  'use strict';
+  const { CONC_KINDS, convert, parseUnit, autoVolume } = VR.use('core/units.js');
+  const { runCalc, readQuantity, readNumber, formatter, step, note, warn, addHint, CalcError, MissingParam, resolveMolarMass, activeExtras, componentName } = VR.use('core/modes/common.js');
 
 const FIELDS = ['c1', 'V1', 'c2', 'V2'];
 const LABELS = { c1: 'Ausgangskonzentration c₁', V1: 'Volumen Stammlösung V₁', c2: 'Zielkonzentration c₂', V2: 'Endvolumen V₂' };
@@ -25,7 +27,7 @@ function unitOf(x, fallback) {
  *   Das leere Feld (oder solveFor) wird berechnet. Für die gesuchte Größe
  *   bestimmt die mitgegebene Einheit die Ausgabe.
  */
-export function calcVerduennung(input, settings = {}) {
+function calcVerduennung(input, settings = {}) {
   const f = formatter(settings.sig || 4);
   return runCalc((R) => {
     let solve = input.solveFor;
@@ -135,5 +137,24 @@ export function calcVerduennung(input, settings = {}) {
     R.values = { c1, c2, cUnit: cu, V1: V1L, V2: V2L, F, solvent };
     R.checks.push({ type: 'pipette', L: V1L, label: 'Stammlösung' }, { type: 'flask', L: V2L }, { type: 'factor', F });
     R.uncertainty = { kind: 'dilution', steps: [{ V1: V1L, V2: V2L }] };
+
+    // Weitere Stoffe in derselben Stammlösung (＋): gleicher Verdünnungsfaktor
+    const extras = activeExtras(input);
+    if (extras.length) {
+      const mainName = componentName(input, 1);
+      const rows = [[mainName, `${f.n(c1)} ${cu}`, `${f.n(c2)} ${cu}`]];
+      extras.forEach((e, i) => {
+        const nr = i + 2;
+        const lbl = `(${nr}) ${componentName(e, nr)}`;
+        const q = readQuantity(e.c1, { kinds: CONC_KINDS, label: `${lbl}: Konzentration in der Stammlösung`, field: 'extra' });
+        const c2i = (q.value * V1L) / V2L;
+        R.steps.push(step(lbl, 'c₂ = c₁ · V₁ / V₂', `${f.q(q)} · ${f.vol(V1L)} / ${f.vol(V2L)}`, `${f.n(c2i)} ${q.unit.sym}`));
+        rows.push([componentName(e, nr), f.q(q), `${f.n(c2i)} ${q.unit.sym}`]);
+      });
+      R.extraTable = { title: 'Alle Stoffe der Stammlösung nach dem Verdünnen', headers: ['Stoff', 'c₁ (Stamm)', 'c₂ (verdünnt)'], rows };
+    }
   });
 }
+
+  VR.provide('core/modes/verduennung.js', { calcVerduennung });
+}());

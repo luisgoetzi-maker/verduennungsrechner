@@ -1,5 +1,8 @@
 // Verlauf der letzten Berechnungen.
 
+(function () {
+  'use strict';
+
 const KEY = 'history';
 
 function newId() {
@@ -11,7 +14,7 @@ function newId() {
  *   state  Formularzustand (zum Wiederherstellen)
  *   text   Rechenweg als Text (für Export)
  */
-export class HistoryStore {
+class HistoryStore {
   constructor(storage, max = 50) {
     this.storage = storage;
     this.max = max;
@@ -69,3 +72,6 @@ export class HistoryStore {
     return { added: merged.length - base.length };
   }
 }
+
+  VR.provide('core/history.js', { HistoryStore });
+}());

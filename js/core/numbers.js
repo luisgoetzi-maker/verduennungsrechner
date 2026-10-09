@@ -1,7 +1,10 @@
 // Zahlen lesen (deutsche und englische Schreibweise) und formatieren
 // (signifikante Stellen, Dezimalkomma, wissenschaftliche Notation mit ·10ⁿ).
 
-export class NumberError extends Error {
+(function () {
+  'use strict';
+
+class NumberError extends Error {
   constructor(message) {
     super(message);
     this.name = 'NumberError';
@@ -14,11 +17,11 @@ const SUP_TO_ASCII = {
 };
 const ASCII_TO_SUP = Object.fromEntries(Object.entries(SUP_TO_ASCII).map(([k, v]) => [v, k]));
 
-export function toSuperscript(str) {
+function toSuperscript(str) {
   return String(str).split('').map((c) => ASCII_TO_SUP[c] ?? c).join('');
 }
 
-export function fromSuperscript(str) {
+function fromSuperscript(str) {
   return String(str).split('').map((c) => SUP_TO_ASCII[c] ?? c).join('');
 }
 
@@ -49,7 +52,7 @@ function normalizeMantissa(m) {
  * Liest eine Zahl. Akzeptiert z. B. "0,1", "0.1", "1e-3", "2,4·10^-8",
  * "2,4×10⁻⁸", "10^-3", "−5".
  */
-export function parseNumber(input) {
+function parseNumber(input) {
   if (typeof input === 'number') {
     if (!Number.isFinite(input)) throw new NumberError('Ungültige Zahl.');
     return input;
@@ -74,14 +77,14 @@ export function parseNumber(input) {
 }
 
 /** Wie parseNumber, liefert aber null statt eines Fehlers bei leerer Eingabe. */
-export function parseOptionalNumber(input) {
+function parseOptionalNumber(input) {
   if (input === null || input === undefined) return null;
   if (typeof input === 'number') return Number.isFinite(input) ? input : null;
   if (String(input).trim() === '') return null;
   return parseNumber(input);
 }
 
-export function roundSig(x, sig) {
+function roundSig(x, sig) {
   if (!Number.isFinite(x) || x === 0) return x;
   return Number(x.toPrecision(Math.max(1, Math.min(15, sig))));
 }
@@ -99,7 +102,7 @@ function trimZeros(str) {
  *  - ascii: "e"-Schreibweise statt ·10ⁿ (für reine Textausgabe)
  *  - decimal: Dezimaltrennzeichen (Standard ",")
  */
-export function formatNumber(x, sig = 4, opts = {}) {
+function formatNumber(x, sig = 4, opts = {}) {
   const { trim = true, sciMin = 1e-3, sciMax = 1e6, ascii = false, decimal = ',' } = opts;
   if (x === null || x === undefined || Number.isNaN(x)) return '–';
   if (!Number.isFinite(x)) return x > 0 ? '∞' : '-∞';
@@ -128,12 +131,15 @@ export function formatNumber(x, sig = 4, opts = {}) {
 }
 
 /** Zahl + Einheit, z. B. "0,1 mol/L". */
-export function formatQuantity(value, unit, sig = 4, opts = {}) {
+function formatQuantity(value, unit, sig = 4, opts = {}) {
   const n = formatNumber(value, sig, opts);
   return unit ? `${n} ${unit}` : n;
 }
 
 /** Prozentwert (0..1 -> "37 %"). */
-export function formatPercent(fraction, sig = 3) {
+function formatPercent(fraction, sig = 3) {
   return `${formatNumber(fraction * 100, sig)} %`;
 }
+
+  VR.provide('core/numbers.js', { NumberError, toSuperscript, fromSuperscript, parseNumber, parseOptionalNumber, roundSig, formatNumber, formatQuantity, formatPercent });
+}());

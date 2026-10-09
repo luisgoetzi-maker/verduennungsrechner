@@ -16,9 +16,11 @@
 // Dichte, Wertigkeit). Fehlen sie, wird NICHT geraten, sondern die fehlende
 // Angabe in `missing` zurückgegeben.
 
-import { parseNumber, NumberError, formatNumber } from './numbers.js';
+(function () {
+  'use strict';
+  const { parseNumber, NumberError, formatNumber } = VR.use('core/numbers.js');
 
-export class UnitError extends Error {
+class UnitError extends Error {
   constructor(message, code = null, options = null) {
     super(message);
     this.name = 'UnitError';
@@ -27,12 +29,12 @@ export class UnitError extends Error {
   }
 }
 
-export const PREFIXES = Object.freeze({
+const PREFIXES = Object.freeze({
   f: 1e-15, p: 1e-12, n: 1e-9, 'µ': 1e-6, m: 1e-3, c: 1e-2, d: 1e-1, '': 1, k: 1e3, M: 1e6,
 });
 const PREFIX_ALIASES = { u: 'µ', 'μ': 'µ', mc: 'µ' };
 
-export const KINDS = Object.freeze({
+const KINDS = Object.freeze({
   amount: { label: 'Stoffmengenkonzentration', base: 'mol/L' },
   mass: { label: 'Massenkonzentration', base: 'g/L' },
   massfrac: { label: 'Massenanteil', base: 'g/g' },
@@ -44,9 +46,9 @@ export const KINDS = Object.freeze({
   amountq: { label: 'Stoffmenge', base: 'mol' },
 });
 
-export const CONC_KINDS = Object.freeze(['amount', 'mass', 'massfrac', 'volfrac', 'molality', 'normality']);
+const CONC_KINDS = Object.freeze(['amount', 'mass', 'massfrac', 'volfrac', 'molality', 'normality']);
 
-export const PARAMS = Object.freeze({
+const PARAMS = Object.freeze({
   M: { label: 'Molare Masse', unit: 'g/mol' },
   rhoSol: { label: 'Dichte der Lösung', unit: 'g/mL' },
   rhoSub: { label: 'Dichte des reinen Stoffes', unit: 'g/mL' },
@@ -54,7 +56,7 @@ export const PARAMS = Object.freeze({
   density: { label: 'Dichte des Stoffes bzw. der konzentrierten Lösung', unit: 'g/mL' },
 });
 
-export const HINTS = Object.freeze({
+const HINTS = Object.freeze({
   ppm: 'ppm, ppb und ppt sind Massenanteile (mg/kg, µg/kg, ng/kg). Die Gleichsetzung mit mg/L, µg/L bzw. ng/L gilt nur für verdünnte wässrige Lösungen (Dichte ≈ 1 g/mL).',
   ppmAssumed: 'Für die ppm/ppb/ppt-Umrechnung wurde eine Lösungsdichte von 1 g/mL angenommen (verdünnte wässrige Lösung). Bei anderen Lösungen die Dichte eingeben.',
   ppt: 'ppt bedeutet hier „parts per trillion“ (10⁻¹², ng/kg), nicht „parts per thousand“.',
@@ -115,7 +117,7 @@ const cache = new Map();
  * "%w/v", "ppb", "mol/kg", "meq/L", "N", "g/100 mL", "mg L-1", "mL".
  * @returns {{sym:string, kind:string, f:number, ppm?:boolean, pct?:string}}
  */
-export function parseUnit(input) {
+function parseUnit(input) {
   if (input && typeof input === 'object' && input.kind) return input;
   const original = String(input ?? '').trim();
   if (!original) throw new UnitError('Keine Einheit angegeben.', 'empty');
@@ -176,7 +178,7 @@ export function parseUnit(input) {
   return unit;
 }
 
-export function tryParseUnit(input) {
+function tryParseUnit(input) {
   try {
     return parseUnit(input);
   } catch (e) {
@@ -194,7 +196,7 @@ const NUM_RE = /^\s*([+\-−]?(?:10\s*\^\s*[+\-−]?\d+|(?:\d+(?:[.,]\d+)*|[.,]\
  * @param {{defaultUnit?: string|object, kinds?: string[]}} opts
  * @returns {{value:number, unit:object|null, unitText:string}}
  */
-export function parseQuantity(text, opts = {}) {
+function parseQuantity(text, opts = {}) {
   const s = String(text ?? '').trim();
   if (!s) throw new NumberError('Bitte einen Wert eingeben.');
   const m = s.match(NUM_RE);
@@ -211,12 +213,12 @@ export function parseQuantity(text, opts = {}) {
 }
 
 /** Wert in Basiseinheit der Größenart. */
-export function toBase(value, unit) {
+function toBase(value, unit) {
   return value * parseUnit(unit).f;
 }
 
 /** Wert aus Basiseinheit in Zieleinheit. */
-export function fromBase(value, unit) {
+function fromBase(value, unit) {
   return value / parseUnit(unit).f;
 }
 
@@ -280,7 +282,7 @@ function validParam(v) {
  * @param {{M?:number, rhoSol?:number, rhoSub?:number, z?:number}} params
  * @returns {{ok:boolean, value?:number, missing:string[], hints:string[], assumptions:string[], used:string[]}}
  */
-export function convert(value, from, to, params = {}) {
+function convert(value, from, to, params = {}) {
   const fu = parseUnit(from);
   const tu = parseUnit(to);
   const hints = new Set();
@@ -318,12 +320,12 @@ export function convert(value, from, to, params = {}) {
 }
 
 /** Prüft, ob zwei Einheiten ohne Zusatzangaben ineinander umrechenbar sind. */
-export function sameKind(a, b) {
+function sameKind(a, b) {
   return parseUnit(a).kind === parseUnit(b).kind;
 }
 
 // Auswahllisten für die Oberfläche
-export const UNIT_LISTS = Object.freeze({
+const UNIT_LISTS = Object.freeze({
   amount: ['mol/L', 'mmol/L', 'µmol/L', 'nmol/L', 'pmol/L', 'M', 'mM', 'µM', 'nM', 'pM'],
   mass: ['g/L', 'mg/mL', 'mg/L', 'µg/mL', 'µg/L', 'ng/mL', 'ng/L', 'pg/mL', 'µg/µL', 'ng/µL', '% (m/V)'],
   massfrac: ['% (m/m)', 'g/kg', 'mg/kg', 'µg/kg', 'ng/kg', 'mg/g', 'µg/g', 'ng/g', 'ppm', 'ppb', 'ppt'],
@@ -336,7 +338,7 @@ export const UNIT_LISTS = Object.freeze({
 });
 
 // Für die Umrechner-Übersicht: je Größenart eine sinnvolle Auswahl
-export const OVERVIEW_UNITS = Object.freeze({
+const OVERVIEW_UNITS = Object.freeze({
   amount: ['mol/L', 'mmol/L', 'µmol/L', 'nmol/L', 'pmol/L'],
   mass: ['g/L', 'mg/mL', 'mg/L', 'µg/mL', 'µg/L', 'ng/mL', 'ng/L', 'pg/mL', '% (m/V)'],
   massfrac: ['% (m/m)', 'ppm', 'ppb', 'ppt', 'g/kg', 'mg/kg', 'µg/kg', 'ng/kg'],
@@ -359,7 +361,7 @@ const SUMMARY_UNITS = {
  * Wählt aus `candidates` die Einheit, in der der Wert am besten lesbar ist
  * (bevorzugt 1 ≤ x < 1000).
  */
-export function bestUnit(baseValue, candidates) {
+function bestUnit(baseValue, candidates) {
   let best = null;
   let bestScore = Infinity;
   for (const c of candidates) {
@@ -374,7 +376,7 @@ export function bestUnit(baseValue, candidates) {
 }
 
 /** Sinnvolle Volumeneinheit (µL / mL / L) für einen Wert in L. */
-export function autoVolume(liters) {
+function autoVolume(liters) {
   const a = Math.abs(liters) * (1 + 1e-9);
   if (a === 0) return parseUnit('mL');
   if (a < 1e-6) return parseUnit('nL');
@@ -384,7 +386,7 @@ export function autoVolume(liters) {
 }
 
 /** Sinnvolle Masseneinheit (µg / mg / g / kg) für einen Wert in g. */
-export function autoMass(grams) {
+function autoMass(grams) {
   const a = Math.abs(grams) * (1 + 1e-9);
   if (a === 0) return parseUnit('g');
   if (a < 1e-6) return parseUnit('ng');
@@ -395,7 +397,7 @@ export function autoMass(grams) {
 }
 
 /** Formatiert einen Wert (Basiseinheit) mit automatisch gewählter Einheit. */
-export function formatAuto(baseValue, kind, sig = 4) {
+function formatAuto(baseValue, kind, sig = 4) {
   let u;
   if (kind === 'volume') u = autoVolume(baseValue);
   else if (kind === 'massq') u = autoMass(baseValue);
@@ -407,7 +409,7 @@ export function formatAuto(baseValue, kind, sig = 4) {
  * Rechnet einen Wert in alle sinnvollen Einheiten um (Umrechner-Übersicht).
  * @returns {{groups: Array<{kind, label, rows: Array<{unit, value}>, best, missing: string[]}>, hints:string[], assumptions:string[]}}
  */
-export function convertAll(value, from, params = {}) {
+function convertAll(value, from, params = {}) {
   const fu = parseUnit(from);
   if (!CONC_KINDS.includes(fu.kind)) throw new UnitError('Bitte eine Konzentrationseinheit angeben.', 'not-conc');
   const hints = new Set();
@@ -449,3 +451,6 @@ export function convertAll(value, from, params = {}) {
   }
   return { groups, hints: [...hints], assumptions: [...assumptions] };
 }
+
+  VR.provide('core/units.js', { UnitError, PREFIXES, KINDS, CONC_KINDS, PARAMS, HINTS, parseUnit, tryParseUnit, parseQuantity, toBase, fromBase, convert, sameKind, UNIT_LISTS, OVERVIEW_UNITS, bestUnit, autoVolume, autoMass, formatAuto, convertAll });
+}());

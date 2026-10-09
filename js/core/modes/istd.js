@@ -1,10 +1,12 @@
 // Modus F: Interner Standard (Spiking) – Zugabevolumen je Probe und
 // Gesamtbedarf für eine Charge mit n Proben inklusive Reserve.
 
-import { CONC_KINDS, convert } from '../units.js';
-import { runCalc, readQuantity, readNumber, formatter, step, note, warn, addHint, CalcError, MissingParam, resolveMolarMass } from './common.js';
-import { roundToPipette } from '../devices.js';
-import { DEFAULT_SETTINGS } from '../settings.js';
+(function () {
+  'use strict';
+  const { CONC_KINDS, convert } = VR.use('core/units.js');
+  const { runCalc, readQuantity, readNumber, formatter, step, note, warn, addHint, CalcError, MissingParam, resolveMolarMass, activeExtras, componentName } = VR.use('core/modes/common.js');
+  const { roundToPipette } = VR.use('core/devices.js');
+  const { DEFAULT_SETTINGS } = VR.use('core/settings.js');
 
 /**
  * @param {object} input
@@ -17,7 +19,7 @@ import { DEFAULT_SETTINGS } from '../settings.js';
  *   reserve    Reserve in %
  *   round      Zugabevolumen auf Pipettenauflösung runden
  */
-export function calcIstd(input, settings = {}) {
+function calcIstd(input, settings = {}) {
   const S = { ...DEFAULT_SETTINGS, ...settings };
   const f = formatter(S.sig);
   return runCalc((R) => {
@@ -100,3 +102,79 @@ export function calcIstd(input, settings = {}) {
     }
   });
 }
+
+/**
+ * Mehrere IS-Lösungen je Probe (＋). Jede Lösung hat eigene Konzentration und
+ * Zielkonzentration. Bei "zur Probe geben" erhöht jede Zugabe das Endvolumen –
+ * das wird für alle gemeinsam exakt gelöst:
+ *   cᵢ(Ziel) = cᵢ(Lösung) · vᵢ / (V + Σv)  →  Σv = V · a / (1 − a),  a = Σ cᵢ(Ziel)/cᵢ(Lösung)
+ */
+function calcIstdMehrere(input, settings = {}) {
+  const S = { ...DEFAULT_SETTINGS, ...settings };
+  const f = formatter(S.sig);
+  return runCalc((R) => {
+    const mode = input.mode === 'fill' ? 'fill' : 'add';
+    const V = readQuantity(input.sample, { kinds: ['volume'], label: mode === 'add' ? 'Probenvolumen' : 'Endvolumen', field: 'sample' }).base;
+    const n = readNumber(input.n, { label: 'Anzahl Proben', field: 'n', min: 0 }) ?? 1;
+    if (!Number.isInteger(n)) throw new CalcError('Anzahl Proben: bitte eine ganze Zahl eingeben.', 'n');
+    const reserve = readNumber(input.reserve, { label: 'Reserve', field: 'reserve', min: 0, minExclusive: false }) ?? 0;
+    const round = input.round ?? S.roundPipette;
+    const parts = [{ ...input, nr: 1 }, ...activeExtras(input).map((e, i) => ({ ...e, nr: i + 2 }))];
+
+    const items = parts.map((part) => {
+      const name = componentName(part, part.nr);
+      const lbl = `(${part.nr}) ${name}`;
+      const field = part.nr === 1 ? null : 'extra';
+      const stock = readQuantity(part.stock, { kinds: CONC_KINDS, label: `${lbl}: Konzentration IS-Lösung`, field: field || 'stock' });
+      const target = readQuantity(part.target, { kinds: CONC_KINDS, label: `${lbl}: Zielkonzentration`, field: field || 'target' });
+      let ct = target.value;
+      if (target.unit.sym !== stock.unit.sym) {
+        const M = resolveMolarMass({ substance: part.substance, formula: part.formula, M: part.M }).M ?? undefined;
+        const r = convert(target.value, target.unit, stock.unit, { M });
+        if (!r.ok) throw new CalcError(`${lbl}: Für die Umrechnung fehlt die Molare Masse – Stoff wählen oder gleiche Einheiten verwenden.`, field || 'target');
+        r.hints.forEach((h) => addHint(R, h));
+        ct = r.value;
+      }
+      if (ct >= stock.value) throw new CalcError(`${lbl}: Die Zielkonzentration muss kleiner als die Konzentration der IS-Lösung sein.`, field || 'target');
+      return { nr: part.nr, name, lbl, cs: stock.value, ct, cu: stock.unit.sym };
+    });
+
+    R.steps.push(note('Gegeben', `${items.length} IS-Lösungen; ${mode === 'add' ? 'Probenvolumen' : 'Endvolumen'} ${f.vol(V)}; ${n} Proben; Reserve ${f.n(reserve)} %`));
+    let Vend = V;
+    if (mode === 'add') {
+      const a = items.reduce((sum, it) => sum + it.ct / it.cs, 0);
+      if (a >= 1) throw new CalcError('Die Zielkonzentrationen sind zu hoch für diese IS-Lösungen (Summe der Anteile ≥ 100 %).', 'target');
+      const Ssum = (V * a) / (1 - a);
+      Vend = V + Ssum;
+      R.steps.push(note('Ansatz', 'cᵢ(Ziel) = cᵢ(IS) · vᵢ / (V + Σv); Σv = V · a / (1 − a) mit a = Σ cᵢ(Ziel)/cᵢ(IS)'));
+      R.steps.push(step('Summe der Zugaben', 'Σv = V · a / (1 − a)', `${f.vol(V)} · ${f.n(a)} / (1 − ${f.n(a)})`, f.vol(Ssum)));
+    }
+    for (const it of items) {
+      it.v = (it.ct * Vend) / it.cs;
+      R.steps.push(step(it.lbl, mode === 'add' ? 'v = c(Ziel) · (V + Σv) / c(IS)' : 'v = c(Ziel) · V(End) / c(IS)',
+        `${f.n(it.ct)} ${it.cu} · ${f.vol(Vend)} / ${f.n(it.cs)} ${it.cu}`, f.vol(it.v)));
+      it.vr = round ? roundToPipette(it.v) : it.v;
+    }
+    const sumR = items.reduce((sum, it) => sum + it.vr, 0);
+    if (mode === 'fill' && sumR >= V) throw new CalcError('Die Zugaben sind größer als das Endvolumen.', 'sample');
+    const denom = mode === 'add' ? V + sumR : V;
+    const rows = items.map((it) => {
+      it.actual = (it.cs * it.vr) / denom;
+      const total = it.vr * n * (1 + reserve / 100);
+      R.checks.push({ type: 'pipette', L: it.vr, label: it.lbl });
+      return [it.name, `${f.n(it.cs)} ${it.cu}`, `${f.n(it.ct)} ${it.cu}`, f.vol(it.vr), f.vol(total), `${f.n(it.actual)} ${it.cu}`];
+    });
+    R.extraTable = { title: 'Zugabe je IS-Lösung', headers: ['IS', 'c(Lösung)', 'Ziel', 'je Probe', `Charge (${n} Proben + ${f.n(reserve)} %)`, 'tatsächlich'], rows };
+    R.main.push({ label: 'Zugabe je Probe (alle IS)', text: f.vol(sumR), value: sumR, unit: 'L', primary: true });
+    R.main.push({ label: 'IS-Lösungen', text: String(items.length) });
+    R.instruction = `Je Probe (${f.vol(V)}) ${items.map((it) => `${f.vol(it.vr)} ${it.name}`).join(', ')} zugeben${mode === 'fill' ? ' und auf das Endvolumen auffüllen' : ''}.`;
+    const minL = S.minPipetteUL * 1e-6;
+    const small = items.filter((it) => it.vr < minL * (1 - 1e-9));
+    if (small.length) warn(R, `Zugabe unter ${f.n(S.minPipetteUL)} µL bei: ${small.map((it) => it.name).join(', ')} – Arbeitslösung (Verdünnung) dieser IS-Lösung herstellen.`);
+    if (mode === 'add' && sumR / V > 0.05) warn(R, `Die Zugaben verdünnen die Probe um ${f.n((sumR / (V + sumR)) * 100)} %.`, 'info');
+    R.values = { n, reserve, mode, sum: sumR, items: items.map((it) => ({ name: it.name, v: it.vr, actual: it.actual })) };
+  });
+}
+
+  VR.provide('core/modes/istd.js', { calcIstd, calcIstdMehrere });
+}());

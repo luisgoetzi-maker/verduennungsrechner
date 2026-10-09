@@ -1,5 +1,8 @@
 // Ablaufdaten: Ampel grün/gelb/rot.
 
+(function () {
+  'use strict';
+
 function toDay(d) {
   return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
 }
@@ -11,7 +14,7 @@ function parseISO(iso) {
 }
 
 /** Tage bis zum Datum (negativ = vergangen). null bei ungültigem Datum. */
-export function daysUntil(iso, today = new Date()) {
+function daysUntil(iso, today = new Date()) {
   const t = parseISO(iso);
   if (t === null) return null;
   return Math.round((t - toDay(today)) / 86400000);
@@ -26,7 +29,7 @@ function fmt(iso) {
  * @returns {{color:'green'|'yellow'|'red'|'grey', days:number|null, text:string, rank:number}}
  *   rank: Sortierreihenfolge (abgelaufen zuerst)
  */
-export function expiryStatus(iso, warnDays = 14, today = new Date()) {
+function expiryStatus(iso, warnDays = 14, today = new Date()) {
   const days = daysUntil(iso, today);
   if (days === null) return { color: 'grey', days: null, text: 'kein Ablaufdatum', rank: 3 };
   if (days < 0) return { color: 'red', days, text: `abgelaufen seit ${-days} ${-days === 1 ? 'Tag' : 'Tagen'} (${fmt(iso)})`, rank: 0 };
@@ -36,9 +39,12 @@ export function expiryStatus(iso, warnDays = 14, today = new Date()) {
 }
 
 /** Datum + n Tage als ISO-String. */
-export function addDays(iso, n) {
+function addDays(iso, n) {
   const t = parseISO(iso);
   if (t === null) return '';
   const d = new Date(t + n * 86400000);
   return d.toISOString().slice(0, 10);
 }
+
+  VR.provide('core/expiry.js', { daysUntil, expiryStatus, addDays });
+}());

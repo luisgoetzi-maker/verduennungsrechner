@@ -1,8 +1,10 @@
 // Export einer Berechnung als Text (zum Einkleben ins Laborjournal).
 
-import { stepText } from './modes/common.js';
-import { formatNumber } from './numbers.js';
-import { formatAuto } from './units.js';
+(function () {
+  'use strict';
+  const { stepText } = VR.use('core/modes/common.js');
+  const { formatNumber } = VR.use('core/numbers.js');
+  const { formatAuto } = VR.use('core/units.js');
 
 function pad(s, n, right = false) {
   const str = String(s);
@@ -11,14 +13,14 @@ function pad(s, n, right = false) {
 }
 
 /** Tabelle als Text mit festen Spaltenbreiten. */
-export function textTable(headers, rows, rightAlign = []) {
+function textTable(headers, rows, rightAlign = []) {
   const widths = headers.map((hd, i) => Math.max(String(hd).length, ...rows.map((r) => String(r[i] ?? '').length)));
   const line = (cells) => cells.map((c, i) => pad(c ?? '', widths[i], rightAlign.includes(i))).join(' | ').trimEnd();
   return [line(headers), widths.map((w) => '-'.repeat(w)).join('-+-'), ...rows.map(line)].join('\n');
 }
 
 /** Pipettierplan (Modus D) als Tabellenzeilen. */
-export function seriesRows(table, sig = 4) {
+function seriesRows(table, sig = 4) {
   const u = table.unit;
   const headers = ['Nr', `Ziel (${u})`, 'aus', 'pipett.', 'auf', `tats. (${u})`];
   if (table.mode === 'serial') headers.push('Rest');
@@ -43,7 +45,7 @@ export function seriesRows(table, sig = 4) {
 }
 
 /** Mischstandard (Modus G) als Tabellenzeilen. */
-export function mixRows(table) {
+function mixRows(table) {
   const withDevice = table.rows.some((r) => r.device);
   const headers = ['Nr', 'Stoff', 'Ziel', 'aus', 'abmessen', ...(withDevice ? ['Gerät'] : []), 'Hinweis'];
   const rows = table.rows.map((r) => [r.nr, r.name, r.target, r.source, r.amount, ...(withDevice ? [r.device || ''] : []), (r.notes || []).join('; ')]);
@@ -54,7 +56,7 @@ export function mixRows(table) {
  * @param {object} R Ergebnis eines Rechenmodus
  * @param {{title?:string, date?:Date|number, sig?:number, inputs?:string[]}} meta
  */
-export function resultToText(R, meta = {}) {
+function resultToText(R, meta = {}) {
   const sig = meta.sig || 4;
   const out = [];
   const date = new Date(meta.date || Date.now());
@@ -91,6 +93,11 @@ export function resultToText(R, meta = {}) {
     out.push('');
     out.push('Komponenten:');
     out.push(textTable(t.headers, t.rows));
+  }
+  if (R.extraTable) {
+    out.push('');
+    out.push(`${R.extraTable.title}:`);
+    out.push(textTable(R.extraTable.headers, R.extraTable.rows));
   }
   if (R.table && R.table.type === 'convert') {
     out.push('');
@@ -130,3 +137,6 @@ export function resultToText(R, meta = {}) {
   }
   return out.join('\n');
 }
+
+  VR.provide('core/export.js', { textTable, seriesRows, mixRows, resultToText });
+}());

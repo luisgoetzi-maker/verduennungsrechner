@@ -1,2 +1,9 @@
 // App-Version (bei Änderungen zusammen mit CACHE_VERSION in sw.js erhöhen).
-export const APP_VERSION = '1.2.0';
+
+(function () {
+  'use strict';
+
+const APP_VERSION = '1.3.0';
+
+  VR.provide('ui/version.js', { APP_VERSION });
+}());

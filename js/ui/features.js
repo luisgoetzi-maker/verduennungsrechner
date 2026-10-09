@@ -4,17 +4,19 @@
 //  - Export als PDF / Drucken, "Als Lösung speichern"
 //  - Lösungsverwaltung und Verlauf (eigene Ansichten)
 
-import { h, clear, toast, debounce, ICONS } from './dom.js';
-import { evaluatePractice } from '../core/practice.js';
-import { estimateUncertainty } from '../core/uncertainty.js';
-import { resultToText } from '../core/export.js';
-import { downloadPdf } from './pdf-export.js';
-import { SolutionStore } from '../core/solutions.js';
-import { HistoryStore } from '../core/history.js';
-import { formatNumber } from '../core/numbers.js';
-import { renderSolutions, openSolutionEditor } from './views/solutions.js';
-import { renderHistory } from './views/history.js';
-import { numberField } from './components.js';
+(function () {
+  'use strict';
+  const { h, clear, toast, debounce, ICONS } = VR.use('ui/dom.js');
+  const { evaluatePractice } = VR.use('core/practice.js');
+  const { estimateUncertainty } = VR.use('core/uncertainty.js');
+  const { resultToText } = VR.use('core/export.js');
+  const { downloadPdf } = VR.use('ui/pdf-export.js');
+  const { SolutionStore } = VR.use('core/solutions.js');
+  const { HistoryStore } = VR.use('core/history.js');
+  const { formatNumber } = VR.use('core/numbers.js');
+  const { renderSolutions, openSolutionEditor } = VR.use('ui/views/solutions.js');
+  const { renderHistory } = VR.use('ui/views/history.js');
+  const { numberField } = VR.use('ui/components.js');
 
 const pct = (x) => `${formatNumber(x * 100, 2)} %`;
 
@@ -72,7 +74,7 @@ function solutionPrefill(R, mode, form, meta) {
   return { name, conc, substance: sub ? sub.name : (input.formula || ''), calc: resultToText(R, meta) };
 }
 
-export function install(app) {
+function install(app) {
   app.solutions = new SolutionStore(app.storage);
   app.history = new HistoryStore(app.storage, app.settings.historyMax);
   app.views.loesungen = renderSolutions;
@@ -121,3 +123,6 @@ export function install(app) {
   const c = app.solutions.counts({ warnDays: app.settings.expiryWarnDays });
   if (c.red) setTimeout(() => toast(`${c.red} ${c.red === 1 ? 'Lösung ist' : 'Lösungen sind'} abgelaufen – siehe „Lösungen“.`, 4000), 800);
 }
+
+  VR.provide('ui/features.js', { install });
+}());

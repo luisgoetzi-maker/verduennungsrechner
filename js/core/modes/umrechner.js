@@ -1,12 +1,14 @@
 // Modus E: Einheiten-Umrechner – ein Wert in allen sinnvollen Einheiten.
 
-import { CONC_KINDS, convertAll, HINTS, PARAMS } from '../units.js';
-import { runCalc, readQuantity, readNumber, formatter, step, note, resolveMolarMass } from './common.js';
+(function () {
+  'use strict';
+  const { CONC_KINDS, convertAll, HINTS, PARAMS, convert, bestUnit, parseUnit } = VR.use('core/units.js');
+  const { runCalc, readQuantity, readNumber, formatter, step, note, resolveMolarMass, activeExtras, componentName } = VR.use('core/modes/common.js');
 
 /**
  * @param {object} input {quantity, substance?, formula?, M?, rhoSol?, rhoSub?, z?}
  */
-export function calcUmrechner(input, settings = {}) {
+function calcUmrechner(input, settings = {}) {
   const f = formatter(settings.sig || 4);
   return runCalc((R) => {
     const q = readQuantity(input.quantity, { kinds: CONC_KINDS, label: 'Wert', field: 'quantity' });
@@ -70,6 +72,28 @@ export function calcUmrechner(input, settings = {}) {
       parts.push(`${f.n(row.value)} ${row.unit.sym}${row.assumed ? '*' : ''}`);
     }
     R.main.push({ label: 'Ergebnis', text: parts.join(' = '), primary: true });
+    // Derselbe Wert für weitere Stoffe (＋): Umrechnung über die jeweilige Molare Masse
+    const extras = activeExtras(input);
+    if (extras.length) {
+      const amountUnits = ['mol/L', 'mmol/L', 'µmol/L', 'nmol/L', 'pmol/L'];
+      const massUnits = ['g/L', 'mg/L', 'µg/L', 'ng/L', 'pg/mL'];
+      const show = (value, unitSym, list) => {
+        const u = bestUnit(value * parseUnit(unitSym).f, list);
+        return `${f.n((value * parseUnit(unitSym).f) / u.f)} ${u.sym}`;
+      };
+      const rows = [];
+      const all = [{ ...input, nr: 1 }, ...extras.map((e, i) => ({ ...e, nr: i + 2 }))];
+      for (const e of all) {
+        const name = e.nr === 1 ? (mm.label && mm.label !== 'Stoff' ? mm.label : 'Stoff 1') : componentName(e, e.nr);
+        const m = e.nr === 1 ? mm : resolveMolarMass({ substance: e.substance, formula: e.formula });
+        if (!m.M) { rows.push([name, '–', 'Molare Masse fehlt', '']); continue; }
+        const p = { ...params, M: m.M, z: e.substance?.z ?? undefined, rhoSub: e.substance?.density ?? undefined };
+        const ra = convert(q.value, q.unit, 'mol/L', p);
+        const rm = convert(q.value, q.unit, 'g/L', p);
+        rows.push([name, f.M(m.M), ra.ok ? show(ra.value, 'mol/L', amountUnits) : 'Angabe fehlt', rm.ok ? show(rm.value, 'g/L', massUnits) : 'Angabe fehlt']);
+      }
+      R.extraTable = { title: `${f.q(q)} für mehrere Stoffe`, headers: ['Stoff', 'M', 'Stoffmenge', 'Masse'], rows };
+    }
     R.table = { type: 'convert', groups: res.groups.map((grp) => ({ ...grp, rows: grp.rows.map((r) => ({ ...r, text: f.n(r.value) })) })) };
     res.hints.forEach((h) => HINTS[h] && R.hints.push(HINTS[h]));
     if (res.assumptions.includes('ppmAssumed')) R.hints.push(`* ${HINTS.ppmAssumed}`);
@@ -82,3 +106,6 @@ export function calcUmrechner(input, settings = {}) {
     if (q.unit.kind === 'volfrac' && q.base > 1) R.warnings.push({ level: 'error', text: 'Volumenanteil über 100 % ist nicht möglich.' });
   });
 }
+
+  VR.provide('core/modes/umrechner.js', { calcUmrechner });
+}());

@@ -1,9 +1,11 @@
 // Formular Modus A: Einwaage – ein Stoff oder (über ＋) mehrere Stoffe in einer Lösung
 
-import { h, ICONS } from '../dom.js';
-import { quantityField, numberField, selectField, textField, substancePicker, moreSection } from '../components.js';
-import { CONC_KINDS } from '../../core/units.js';
-import { formCard, applyHighlights, fromDb, isBlank, collectState, restoreState, CONC_UNITS, AMOUNT_UNITS } from './common.js';
+(function () {
+  'use strict';
+  const { h, ICONS } = VR.use('ui/dom.js');
+  const { quantityField, numberField, selectField, textField, substancePicker, moreSection } = VR.use('ui/components.js');
+  const { CONC_KINDS } = VR.use('core/units.js');
+  const { formCard, applyHighlights, fromDb, isBlank, collectState, restoreState, CONC_UNITS, AMOUNT_UNITS } = VR.use('ui/forms/common.js');
 
 /** Weiterer Stoff derselben Lösung: Stoff/Formel, Zielkonzentration, Reinheit. */
 function createExtra({ db, onChange, textMode, onRemove, concTemplate }) {
@@ -42,7 +44,7 @@ function createExtra({ db, onChange, textMode, onRemove, concTemplate }) {
   return api;
 }
 
-export function createForm({ db, onChange, textMode }) {
+function createForm({ db, onChange, textMode }) {
   const f = {};
   f.substance = substancePicker({ name: 'formula', label: 'Stoff (Name, Formel oder CAS)', db, onInput: () => { updatePlaceholders(); onChange(); } });
   f.conc = quantityField({ name: 'conc', label: 'Zielkonzentration', kinds: CONC_KINDS, units: CONC_UNITS, unit: 'mol/L', placeholder: 'z. B. 0,1', textMode, onInput: onChange });
@@ -154,3 +156,6 @@ export function createForm({ db, onChange, textMode }) {
     substance() { return extras.some((x) => !x.isBlank()) ? null : f.substance.get().substance; },
   };
 }
+
+  VR.provide('ui/forms/einwaage.js', { createForm });
+}());

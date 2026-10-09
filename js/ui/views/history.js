@@ -1,11 +1,13 @@
 // Ansicht "Verlauf": die letzten Berechnungen, wiederherstellen oder exportieren.
 
-import { h, clear, toast, confirmBox, ICONS, formatDateTime } from '../dom.js';
-import { MODE_BY_ID } from '../../core/modes/index.js';
-import { copyText } from './calc.js';
-import { downloadPdf } from '../pdf-export.js';
+(function () {
+  'use strict';
+  const { h, clear, toast, confirmBox, ICONS, formatDateTime } = VR.use('ui/dom.js');
+  const { MODE_BY_ID } = VR.use('core/modes/index.js');
+  const { copyText } = VR.use('ui/views/calc.js');
+  const { downloadPdf } = VR.use('ui/pdf-export.js');
 
-export function renderHistory(root, app) {
+function renderHistory(root, app) {
   const listEl = h('ul', { class: 'list' });
   const render = () => {
     clear(listEl);
@@ -41,3 +43,6 @@ export function renderHistory(root, app) {
   );
   render();
 }
+
+  VR.provide('ui/views/history.js', { renderHistory });
+}());

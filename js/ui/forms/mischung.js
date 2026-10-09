@@ -1,9 +1,11 @@
 // Formular Modus G: Mischstandard – mehrere Stoffe in einer Lösung
 
-import { h, ICONS } from '../dom.js';
-import { quantityField, numberField, selectField, textField, substancePicker, segmented, checkField } from '../components.js';
-import { CONC_KINDS } from '../../core/units.js';
-import { formCard, applyHighlights, isBlank, CONC_UNITS, VOLUME_UNITS } from './common.js';
+(function () {
+  'use strict';
+  const { h, ICONS } = VR.use('ui/dom.js');
+  const { quantityField, numberField, selectField, textField, substancePicker, segmented, checkField } = VR.use('ui/components.js');
+  const { CONC_KINDS } = VR.use('core/units.js');
+  const { formCard, applyHighlights, isBlank, CONC_UNITS, VOLUME_UNITS } = VR.use('ui/forms/common.js');
 
 /** Eine Komponente (Stoff + Quelle + Konzentration). */
 function createComponent({ db, onChange, textMode, onRemove }) {
@@ -86,7 +88,7 @@ function createComponent({ db, onChange, textMode, onRemove }) {
   return api;
 }
 
-export function createForm({ db, onChange, textMode }) {
+function createForm({ db, onChange, textMode }) {
   const f = {};
   f.amount = quantityField({ name: 'amount', label: 'Endvolumen der Mischung (Messkolben)', kinds: ['volume'], units: VOLUME_UNITS, unit: 'mL', placeholder: 'z. B. 10', textMode, onInput: onChange });
   f.useCommon = checkField({ name: 'useCommon', label: 'Gleiche Zielkonzentration für alle Komponenten', checked: true, onInput: () => { applyCommon(); onChange(); } });
@@ -160,3 +162,6 @@ export function createForm({ db, onChange, textMode }) {
     names() { return comps.map((c) => c.name()).filter(Boolean); },
   };
 }
+
+  VR.provide('ui/forms/mischung.js', { createForm });
+}());

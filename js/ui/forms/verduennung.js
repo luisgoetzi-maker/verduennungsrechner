@@ -1,11 +1,13 @@
 // Formular Modus B: Verdünnung c1·V1 = c2·V2
 
-import { h } from '../dom.js';
-import { quantityField, numberField, substancePicker, segmented, moreSection } from '../components.js';
-import { CONC_KINDS } from '../../core/units.js';
-import { formCard, applyHighlights, isBlank, collectState, restoreState, CONC_UNITS, VOLUME_UNITS } from './common.js';
+(function () {
+  'use strict';
+  const { h } = VR.use('ui/dom.js');
+  const { quantityField, numberField, substancePicker, segmented, moreSection, extraSubstanceList } = VR.use('ui/components.js');
+  const { CONC_KINDS } = VR.use('core/units.js');
+  const { formCard, applyHighlights, isBlank, collectState, restoreState, CONC_UNITS, VOLUME_UNITS } = VR.use('ui/forms/common.js');
 
-export function createForm({ db, onChange, textMode }) {
+function createForm({ db, onChange, textMode }) {
   const f = {};
   const change = () => { applySolve(); onChange(); };
   f.solveFor = segmented({
@@ -26,8 +28,14 @@ export function createForm({ db, onChange, textMode }) {
   const more = moreSection('Umrechnung zwischen Einheitenarten (Molare Masse, Dichte …)', [
     f.substance.el, h('div', { class: 'grid2' }, f.M.el, f.z.el), h('div', { class: 'grid2' }, f.rhoSol.el, f.rhoSub.el),
   ]);
-  const el = formCard('B · Verdünnung', 'c₁ · V₁ = c₂ · V₂ – drei Größen eingeben, die gesuchte wird berechnet.', [
-    f.solveFor.el, f.c1.el, f.V1.el, f.c2.el, f.V2.el, more,
+  const extra = extraSubstanceList({
+    db, onChange, textMode,
+    fields: [{ key: 'c1', type: 'quantity', label: 'Konzentration in der Stammlösung (c₁)', kinds: CONC_KINDS, units: CONC_UNITS, unit: 'µg/mL', placeholder: 'z. B. 500' }],
+    template: () => ({ c1: { value: '', unit: f.c1.get().unit } }),
+    addLabel: 'Weiteren Stoff der Stammlösung hinzufügen',
+  });
+  const el = formCard('B · Verdünnung', 'c₁ · V₁ = c₂ · V₂ – drei Größen eingeben, die gesuchte wird berechnet. Mit ＋ weitere Stoffe derselben Stammlösung.', [
+    f.solveFor.el, f.c1.el, f.V1.el, f.c2.el, f.V2.el, extra.el, more,
   ]);
 
   function applySolve() {
@@ -47,12 +55,13 @@ export function createForm({ db, onChange, textMode }) {
         solveFor: s, c1: val('c1'), V1: val('V1'), c2: val('c2'), V2: val('V2'),
         substance: sel.substance, formula: sel.formula, M: f.M.get(),
         rhoSol: f.rhoSol.get(), z: f.z.get(), rhoSub: f.rhoSub.get(),
+        extra: extra.collect(),
       };
     },
     isBlank() { return ['c1', 'V1', 'c2', 'V2'].filter((k) => k !== f.solveFor.get()).every((k) => isBlank(f[k].get())); },
     highlight(R) { applyHighlights(fields, R); },
-    getState() { return { ...collectState(fields), substance: f.substance.getState() }; },
-    setState(st) { restoreState(fields, st); if (st) f.substance.setState(st.substance); applySolve(); },
+    getState() { return { ...collectState(fields), substance: f.substance.getState(), extra: extra.getState() }; },
+    setState(st) { restoreState(fields, st); if (st) { f.substance.setState(st.substance); extra.setState(st.extra); } applySolve(); },
     describe() {
       const s = f.solveFor.get();
       const sym = { c1: 'c₁', V1: 'V₁', c2: 'c₂', V2: 'V₂' };
@@ -61,3 +70,6 @@ export function createForm({ db, onChange, textMode }) {
     substance() { return f.substance.get().substance; },
   };
 }
+
+  VR.provide('ui/forms/verduennung.js', { createForm });
+}());

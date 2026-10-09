@@ -1,12 +1,14 @@
 // Ansicht "Stoffe": Suche, Liste, Bearbeiten, Anlegen, PubChem-Abfrage.
 
-import { h, clear, debounce, toast, sheet, confirmBox, ICONS, formatDate } from '../dom.js';
-import { CATEGORIES, validateCAS, validateSubstance, cleanEntry } from '../../core/substance-db.js';
-import { tryParseFormula } from '../../core/formula.js';
-import { formatNumber } from '../../core/numbers.js';
-import { lookupPubChem } from '../../core/pubchem.js';
-import { textField, numberField, selectField, segmented } from '../components.js';
-import { expiryStatus } from '../../core/expiry.js';
+(function () {
+  'use strict';
+  const { h, clear, debounce, toast, sheet, confirmBox, ICONS, formatDate } = VR.use('ui/dom.js');
+  const { CATEGORIES, validateCAS, validateSubstance, cleanEntry } = VR.use('core/substance-db.js');
+  const { tryParseFormula } = VR.use('core/formula.js');
+  const { formatNumber } = VR.use('core/numbers.js');
+  const { lookupPubChem } = VR.use('core/pubchem.js');
+  const { textField, numberField, selectField, segmented } = VR.use('ui/components.js');
+  const { expiryStatus } = VR.use('core/expiry.js');
 
 const PAGE = 60;
 
@@ -14,7 +16,7 @@ function fmtM(m) {
   return m ? `${formatNumber(m, 6)} g/mol` : '–';
 }
 
-export function renderSubstances(root, app) {
+function renderSubstances(root, app) {
   let category = null;
   let limit = PAGE;
   const search = h('input', { type: 'search', placeholder: 'Suchen: Name, Alias, Formel, CAS …', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false' });
@@ -69,7 +71,7 @@ export function renderSubstances(root, app) {
 }
 
 /** Bearbeiten/Anlegen eines Stoffes im Overlay. */
-export function openEditor(app, entry, onSaved) {
+function openEditor(app, entry, onSaved) {
   const isNew = !entry;
   const sh = sheet(isNew ? 'Neuer Stoff' : 'Stoff bearbeiten');
   const e = entry || { name: '', aliases: [], formula: '', cas: '', cat: 'Sonstige', state: 's', notes: '' };
@@ -221,3 +223,6 @@ export function openEditor(app, entry, onSaved) {
   );
   if (isNew) f.name.input.focus();
 }
+
+  VR.provide('ui/views/substances.js', { renderSubstances, openEditor });
+}());

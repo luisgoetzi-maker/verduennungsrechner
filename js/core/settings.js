@@ -1,6 +1,9 @@
 // Einstellungen mit Standardwerten.
 
-export const DEFAULT_SETTINGS = Object.freeze({
+(function () {
+  'use strict';
+
+const DEFAULT_SETTINGS = Object.freeze({
   sig: 4, // signifikante Stellen in Ergebnissen
   theme: 'dark', // 'dark' | 'light' | 'system'
   textKeyboard: false, // Mengenfelder mit Text- statt Zifferntastatur (für Eingaben wie "5 µg/mL")
@@ -19,12 +22,12 @@ export const DEFAULT_SETTINGS = Object.freeze({
 
 const KEY = 'settings';
 
-export function loadSettings(storage) {
+function loadSettings(storage) {
   const saved = storage.get(KEY) || {};
   return sanitizeSettings({ ...DEFAULT_SETTINGS, ...saved });
 }
 
-export function saveSettings(storage, settings) {
+function saveSettings(storage, settings) {
   const clean = sanitizeSettings(settings);
   storage.set(KEY, clean);
   return clean;
@@ -36,7 +39,7 @@ function numList(v, fallback) {
   return nums.length ? nums : [...fallback];
 }
 
-export function sanitizeSettings(s) {
+function sanitizeSettings(s) {
   const d = DEFAULT_SETTINGS;
   const int = (v, lo, hi, def) => {
     const n = Math.round(Number(v));
@@ -61,3 +64,6 @@ export function sanitizeSettings(s) {
     historyMax: int(s.historyMax, 5, 500, d.historyMax),
   };
 }
+
+  VR.provide('core/settings.js', { DEFAULT_SETTINGS, loadSettings, saveSettings, sanitizeSettings });
+}());

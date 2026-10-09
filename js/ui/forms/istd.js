@@ -1,11 +1,13 @@
 // Formular Modus F: Interner Standard (Spiking)
 
-import { h } from '../dom.js';
-import { quantityField, numberField, substancePicker, segmented, checkField, moreSection } from '../components.js';
-import { CONC_KINDS } from '../../core/units.js';
-import { formCard, applyHighlights, isBlank, collectState, restoreState, CONC_UNITS, VOLUME_UNITS } from './common.js';
+(function () {
+  'use strict';
+  const { h } = VR.use('ui/dom.js');
+  const { quantityField, numberField, substancePicker, segmented, checkField, moreSection, extraSubstanceList } = VR.use('ui/components.js');
+  const { CONC_KINDS } = VR.use('core/units.js');
+  const { formCard, applyHighlights, isBlank, collectState, restoreState, CONC_UNITS, VOLUME_UNITS } = VR.use('ui/forms/common.js');
 
-export function createForm({ db, onChange, textMode, settings }) {
+function createForm({ db, onChange, textMode, settings }) {
   const f = {};
   const change = () => { relabel(); onChange(); };
   f.stock = quantityField({ name: 'stock', label: 'Konzentration der IS-Lösung', kinds: CONC_KINDS, units: CONC_UNITS, unit: 'µg/mL', placeholder: 'z. B. 1', textMode, onInput: onChange });
@@ -24,8 +26,17 @@ export function createForm({ db, onChange, textMode, settings }) {
   f.rhoSol = numberField({ name: 'rhoSol', label: 'Dichte', suffix: 'g/mL', onInput: onChange });
 
   const more = moreSection('Umrechnung zwischen Einheitenarten', [f.substance.el, h('div', { class: 'grid2' }, f.M.el, f.rhoSol.el)]);
-  const el = formCard('F · Interner Standard', 'Zugabevolumen der IS-Lösung je Probe und Gesamtbedarf für eine Charge.', [
-    f.stock.el, f.target.el, f.mode.el, f.sample.el, h('div', { class: 'grid2' }, f.n.el, f.reserve.el), f.round.el, more,
+  const extra = extraSubstanceList({
+    db, onChange, textMode, rowTitle: 'IS',
+    fields: [
+      { key: 'stock', type: 'quantity', label: 'Konzentration der IS-Lösung', kinds: CONC_KINDS, units: CONC_UNITS, unit: 'µg/mL', placeholder: 'z. B. 1' },
+      { key: 'target', type: 'quantity', label: 'IS-Konzentration in der Endlösung', kinds: CONC_KINDS, units: CONC_UNITS, unit: 'ng/mL', placeholder: 'z. B. 10' },
+    ],
+    template: () => ({ stock: { value: '', unit: f.stock.get().unit }, target: { value: '', unit: f.target.get().unit } }),
+    addLabel: 'Weitere IS-Lösung hinzufügen',
+  });
+  const el = formCard('F · Interner Standard', 'Zugabevolumen der IS-Lösung je Probe und Gesamtbedarf für eine Charge. Mit ＋ mehrere IS-Lösungen.', [
+    f.stock.el, f.target.el, extra.el, f.mode.el, f.sample.el, h('div', { class: 'grid2' }, f.n.el, f.reserve.el), f.round.el, more,
   ]);
 
   function relabel() {
@@ -42,13 +53,17 @@ export function createForm({ db, onChange, textMode, settings }) {
       return {
         stock: f.stock.get(), target: f.target.get(), mode: f.mode.get(), sample: f.sample.get(), n: f.n.get(),
         reserve: f.reserve.get(), round: f.round.get(), substance: sel.substance, formula: sel.formula, M: f.M.get(), rhoSol: f.rhoSol.get(),
+        extra: extra.collect(),
       };
     },
     isBlank() { return isBlank(f.stock.get()) && isBlank(f.target.get()) && isBlank(f.sample.get()); },
     highlight(R) { applyHighlights(fields, R); },
-    getState() { return { ...collectState(fields), substance: f.substance.getState() }; },
-    setState(st) { restoreState(fields, st); if (st) f.substance.setState(st.substance); relabel(); },
+    getState() { return { ...collectState(fields), substance: f.substance.getState(), extra: extra.getState() }; },
+    setState(st) { restoreState(fields, st); if (st) { f.substance.setState(st.substance); extra.setState(st.extra); } relabel(); },
     describe() { return `IS ${f.stock.get().value} ${f.stock.get().unit} → ${f.target.get().value} ${f.target.get().unit}`; },
     substance() { return f.substance.get().substance; },
   };
 }
+
+  VR.provide('ui/forms/istd.js', { createForm });
+}());

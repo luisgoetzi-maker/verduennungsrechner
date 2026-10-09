@@ -1,13 +1,15 @@
 // Laborgeräte: Messkolben, Kolbenhubpipetten, Vollpipetten.
 // Rundung von Pipettiervolumina und Gerätevorschläge.
 
-import { DEFAULT_SETTINGS } from './settings.js';
+(function () {
+  'use strict';
+  const { DEFAULT_SETTINGS } = VR.use('core/settings.js');
 
 /**
  * Praktische Einstellauflösung einer Pipette in Abhängigkeit vom Volumen (in L).
  *   < 10 µL: 0,1 µL | 10–100 µL: 0,5 µL | 100–1000 µL: 1 µL | 1–10 mL: 10 µL | ab 10 mL: 0,1 mL
  */
-export function pipetteResolution(L) {
+function pipetteResolution(L) {
   const uL = L * 1e6;
   if (uL < 10) return 0.1e-6;
   if (uL < 100) return 0.5e-6;
@@ -17,7 +19,7 @@ export function pipetteResolution(L) {
 }
 
 /** Rundet ein Volumen (L) auf die praktische Einstellauflösung. */
-export function roundToPipette(L) {
+function roundToPipette(L) {
   if (!(L > 0)) return L;
   const res = pipetteResolution(L);
   const r = Math.round(L / res) * res;
@@ -25,7 +27,7 @@ export function roundToPipette(L) {
 }
 
 /** Kleinster Messkolben ≥ V (L). */
-export function suggestFlask(L, settings = DEFAULT_SETTINGS) {
+function suggestFlask(L, settings = DEFAULT_SETTINGS) {
   const mL = L * 1000;
   const flasks = settings.flasksML || DEFAULT_SETTINGS.flasksML;
   const exact = flasks.find((x) => Math.abs(x - mL) / x < 1e-6);
@@ -43,7 +45,7 @@ function fmt(x) {
  * Gerätevorschlag für ein abzumessendes Volumen (L).
  * Kolbenhubpipetten werden im Bereich 10–100 % ihres Nennvolumens empfohlen.
  */
-export function suggestPipette(L, settings = DEFAULT_SETTINGS) {
+function suggestPipette(L, settings = DEFAULT_SETTINGS) {
   const uL = L * 1e6;
   const pips = (settings.pipettesUL || DEFAULT_SETTINGS.pipettesUL).slice().sort((a, b) => a - b);
   const vols = (settings.volPipettesML || DEFAULT_SETTINGS.volPipettesML).slice().sort((a, b) => a - b);
@@ -69,3 +71,6 @@ export function suggestPipette(L, settings = DEFAULT_SETTINGS) {
   }
   return { kind: 'pipette', uL: maxPip, text: `Kolbenhubpipette ${fmt(maxPip)} µL` };
 }
+
+  VR.provide('core/devices.js', { pipetteResolution, roundToPipette, suggestFlask, suggestPipette });
+}());

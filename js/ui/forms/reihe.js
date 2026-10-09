@@ -1,11 +1,13 @@
 // Formular Modus D: Verdünnungs-/Kalibrierreihe
 
-import { h } from '../dom.js';
-import { quantityField, numberField, textField, selectField, substancePicker, segmented, checkField, moreSection } from '../components.js';
-import { CONC_KINDS } from '../../core/units.js';
-import { formCard, applyHighlights, isBlank, collectState, restoreState, CONC_UNITS, VOLUME_UNITS } from './common.js';
+(function () {
+  'use strict';
+  const { h } = VR.use('ui/dom.js');
+  const { quantityField, numberField, textField, selectField, substancePicker, segmented, checkField, moreSection, extraSubstanceList } = VR.use('ui/components.js');
+  const { CONC_KINDS } = VR.use('core/units.js');
+  const { formCard, applyHighlights, isBlank, collectState, restoreState, CONC_UNITS, VOLUME_UNITS } = VR.use('ui/forms/common.js');
 
-export function createForm({ db, onChange, textMode, settings }) {
+function createForm({ db, onChange, textMode, settings }) {
   const f = {};
   const change = () => { toggle(); onChange(); };
   f.stock = quantityField({ name: 'stock', label: 'Stammlösung', kinds: CONC_KINDS, units: CONC_UNITS, unit: 'µg/mL', placeholder: 'z. B. 10', textMode, onInput: onChange });
@@ -27,8 +29,14 @@ export function createForm({ db, onChange, textMode, settings }) {
   const listBox = h('div', {}, f.targets.el, f.targetUnit.el);
   const factorBox = h('div', { class: 'grid2' }, f.serialFactor.el, f.serialCount.el);
   const more = moreSection('Umrechnung zwischen Einheitenarten', [f.substance.el, h('div', { class: 'grid2' }, f.M.el, f.z.el), f.rhoSol.el]);
-  const el = formCard('D · Verdünnungsreihe', 'Stammlösung + Zielkonzentrationen + Volumen je Standard → Pipettierplan.', [
-    f.stock.el, f.mode.el, f.serialHow.el, listBox, factorBox, f.Vstd.el, f.round.el, f.useIntermediate.el, f.compensate.el, more,
+  const extra = extraSubstanceList({
+    db, onChange, textMode,
+    fields: [{ key: 'stock', type: 'quantity', label: 'Konzentration in der Stammlösung', kinds: CONC_KINDS, units: CONC_UNITS, unit: 'µg/mL', placeholder: 'z. B. 10' }],
+    template: () => ({ stock: { value: '', unit: f.stock.get().unit } }),
+    addLabel: 'Weiteren Stoff der Stammlösung hinzufügen',
+  });
+  const el = formCard('D · Verdünnungsreihe', 'Stammlösung + Zielkonzentrationen + Volumen je Standard → Pipettierplan. Mit ＋ weitere Stoffe einer Mischstammlösung.', [
+    f.stock.el, extra.el, f.mode.el, f.serialHow.el, listBox, factorBox, f.Vstd.el, f.round.el, f.useIntermediate.el, f.compensate.el, more,
   ]);
 
   function toggle() {
@@ -57,13 +65,17 @@ export function createForm({ db, onChange, textMode, settings }) {
         serialFactor: useFactor ? f.serialFactor.get() : '', serialCount: useFactor ? f.serialCount.get() : '',
         Vstd: f.Vstd.get(), round: f.round.get(), useIntermediate: f.useIntermediate.get(), compensate: f.compensate.get(),
         substance: sel.substance, formula: sel.formula, M: f.M.get(), rhoSol: f.rhoSol.get(), z: f.z.get(),
+        extra: extra.collect(),
       };
     },
     isBlank() { return isBlank(f.stock.get()) && isBlank(f.targets.get()) && isBlank(f.Vstd.get()); },
     highlight(R) { applyHighlights(fields, R); },
-    getState() { return { ...collectState(fields), substance: f.substance.getState() }; },
-    setState(st) { restoreState(fields, st); if (st) f.substance.setState(st.substance); toggle(); },
+    getState() { return { ...collectState(fields), substance: f.substance.getState(), extra: extra.getState() }; },
+    setState(st) { restoreState(fields, st); if (st) { f.substance.setState(st.substance); extra.setState(st.extra); } toggle(); },
     describe() { return `Stamm ${f.stock.get().value} ${f.stock.get().unit}, ${f.mode.get() === 'serial' ? 'seriell' : 'parallel'}`; },
     substance() { return f.substance.get().substance; },
   };
 }
+
+  VR.provide('ui/forms/reihe.js', { createForm });
+}());

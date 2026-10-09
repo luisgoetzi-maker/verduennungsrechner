@@ -2,15 +2,17 @@
 //  parallel: jeder Standard direkt aus der Stammlösung (optional über eine Zwischenverdünnung)
 //  seriell:  jeder Standard aus dem vorherigen (z. B. 1:10-Schritte)
 
-import { parseQuantity, CONC_KINDS, convert, KINDS } from '../units.js';
-import { NumberError } from '../numbers.js';
-import { UnitError } from '../units.js';
-import { runCalc, readQuantity, readNumber, formatter, step, note, warn, addHint, CalcError, MissingParam, resolveMolarMass } from './common.js';
-import { roundToPipette } from '../devices.js';
-import { DEFAULT_SETTINGS } from '../settings.js';
+(function () {
+  'use strict';
+  const { parseQuantity, CONC_KINDS, convert, KINDS } = VR.use('core/units.js');
+  const { NumberError } = VR.use('core/numbers.js');
+  const { UnitError } = VR.use('core/units.js');
+  const { runCalc, readQuantity, readNumber, formatter, step, note, warn, addHint, CalcError, MissingParam, resolveMolarMass, activeExtras, componentName } = VR.use('core/modes/common.js');
+  const { roundToPipette } = VR.use('core/devices.js');
+  const { DEFAULT_SETTINGS } = VR.use('core/settings.js');
 
 /** Liest eine Liste von Konzentrationen: "100; 50; 20", "100, 50, 20", "0,5 1 2", je Zeile einer. */
-export function parseTargetList(text, defaultUnit) {
+function parseTargetList(text, defaultUnit) {
   const s = String(text ?? '').trim();
   if (!s) throw new CalcError('Bitte Zielkonzentrationen eingeben (z. B. 100; 50; 20; 10).', 'targets');
   let items = s.split(/[;\n\t]+|,\s+/).map((x) => x.trim()).filter(Boolean);
@@ -43,7 +45,7 @@ export function parseTargetList(text, defaultUnit) {
  *   round        Pipettiervolumina auf Geräteauflösung runden (Standard: Einstellung)
  *   M, rhoSol, z Zusatzangaben, falls Stamm und Ziele verschiedene Größenarten haben
  */
-export function calcReihe(input, settings = {}) {
+function calcReihe(input, settings = {}) {
   const S = { ...DEFAULT_SETTINGS, ...settings };
   const f = formatter(S.sig);
   return runCalc((R) => {
@@ -177,6 +179,23 @@ export function calcReihe(input, settings = {}) {
 
     const stockUse = rows.filter((r) => r.src === 'Stamm').reduce((s, r) => s + r.V, 0);
     R.values = { ...R.values, rows, stockUse, cUnit: du, mode };
+    // Weitere Stoffe in der Stammlösung (＋): gleiche Verdünnung, eigene Ausgangskonzentration
+    const extras = activeExtras(input);
+    if (extras.length) {
+      const mainName = componentName(input, 1);
+      const ex = extras.map((e, i) => {
+        const nr = i + 2;
+        const name = componentName(e, nr);
+        const q = readQuantity(e.stock, { kinds: CONC_KINDS, label: `(${nr}) ${name}: Konzentration in der Stammlösung`, field: 'extra' });
+        R.steps.push(step(`(${nr}) ${name}`, `c = c(${mainName}) · c₀(${name}) / c₀(${mainName})`, `Faktor ${f.n(q.value / c0)} ${q.unit.sym}/${cu}`, 'je Standard siehe Tabelle'));
+        return { name, q };
+      });
+      R.extraTable = {
+        title: 'Konzentration jedes Stoffes je Standard (tatsächlich)',
+        headers: ['Std', `${mainName} (${du})`, ...ex.map((x) => `${x.name} (${x.q.unit.sym})`)],
+        rows: rows.map((r) => [r.nr, f.n(r.actual * dk), ...ex.map((x) => f.n((r.actual * x.q.value) / c0))]),
+      };
+    }
     for (const r of rows) { r.target *= dk; r.actual *= dk; }
     R.table = { type: 'series', mode, unit: du, rows };
     R.main.push({ label: 'Standards', text: `${rows.filter((r) => !r.intermediate).length}`, primary: true });
@@ -192,3 +211,6 @@ export function calcReihe(input, settings = {}) {
     R.values.kindLabel = KINDS[stock.unit.kind].label;
   });
 }
+
+  VR.provide('core/modes/reihe.js', { parseTargetList, calcReihe });
+}());

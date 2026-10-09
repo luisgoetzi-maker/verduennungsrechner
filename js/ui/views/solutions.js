@@ -1,11 +1,13 @@
 // Ansicht "Lösungen": hergestellte Lösungen mit Ampel nach Ablaufdatum.
 
-import { h, clear, debounce, toast, sheet, confirmBox, ICONS, todayISO, formatDate } from '../dom.js';
-import { textField, numberField } from '../components.js';
-import { addDays } from '../../core/expiry.js';
-import { copyText } from './calc.js';
+(function () {
+  'use strict';
+  const { h, clear, debounce, toast, sheet, confirmBox, ICONS, todayISO, formatDate } = VR.use('ui/dom.js');
+  const { textField, numberField } = VR.use('ui/components.js');
+  const { addDays } = VR.use('core/expiry.js');
+  const { copyText } = VR.use('ui/views/calc.js');
 
-export function renderSolutions(root, app) {
+function renderSolutions(root, app) {
   let filter = 'all';
   const search = h('input', { type: 'search', placeholder: 'Suchen: Name, Konzentration, Lösungsmittel …', autocomplete: 'off' });
   const filters = h('div', { class: 'filters' });
@@ -54,7 +56,7 @@ export function renderSolutions(root, app) {
 }
 
 /** Etikett-Text für eine Lösung. */
-export function labelText(s) {
+function labelText(s) {
   return [s.name, s.conc && `Konz.: ${s.conc}`, s.solvent && `in ${s.solvent}`, s.made && `hergestellt: ${formatDate(s.made)}${s.by ? ` (${s.by})` : ''}`, s.expires && `verwendbar bis: ${formatDate(s.expires)}`]
     .filter(Boolean).join('\n');
 }
@@ -63,7 +65,7 @@ export function labelText(s) {
  * Lösung anlegen/bearbeiten. `prefill` füllt ein neues Formular vor
  * (z. B. aus einer Berechnung).
  */
-export function openSolutionEditor(app, solution, onSaved, prefill = null) {
+function openSolutionEditor(app, solution, onSaved, prefill = null) {
   const isNew = !solution;
   const s = solution || { made: todayISO(), ...(prefill || {}) };
   const sh = sheet(isNew ? 'Neue Lösung' : 'Lösung bearbeiten');
@@ -126,3 +128,6 @@ export function openSolutionEditor(app, solution, onSaved, prefill = null) {
     msgBox, buttons,
   );
 }
+
+  VR.provide('ui/views/solutions.js', { renderSolutions, labelText, openSolutionEditor });
+}());

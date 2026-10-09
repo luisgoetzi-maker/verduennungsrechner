@@ -5,15 +5,17 @@
 //   {type:'mass', g, label}     Einwaage
 //   {type:'factor', F}          Verdünnungsfaktor eines Schritts
 
-import { DEFAULT_SETTINGS } from './settings.js';
-import { suggestFlask, suggestPipette } from './devices.js';
-import { formatNumber } from './numbers.js';
-import { formatAuto } from './units.js';
+(function () {
+  'use strict';
+  const { DEFAULT_SETTINGS } = VR.use('core/settings.js');
+  const { suggestFlask, suggestPipette } = VR.use('core/devices.js');
+  const { formatNumber } = VR.use('core/numbers.js');
+  const { formatAuto } = VR.use('core/units.js');
 
 const n = (x, s = 3) => formatNumber(x, s);
 
 /** Kurzform eines Gerätevorschlags für Tabellen. */
-export function shortDevice(d) {
+function shortDevice(d) {
   switch (d.kind) {
     case 'pipette': return `Pip. ${String(d.uL).replace('.', ',')} µL`;
     case 'volpipette': return `Vollpip. ${String(d.mL).replace('.', ',')} mL`;
@@ -24,7 +26,7 @@ export function shortDevice(d) {
 }
 
 /** Vorschlag für eine Aufteilung eines großen Faktors in zwei Schritte. */
-export function splitFactor(F) {
+function splitFactor(F) {
   const k = Math.ceil(Math.log10(F) / 2 - 1e-9);
   const F1 = 10 ** k;
   return [F1, F / F1];
@@ -35,7 +37,7 @@ export function splitFactor(F) {
  * @param {object} settings
  * @returns {{warnings: Array<{level, text}>, devices: Array<{label, text}>}}
  */
-export function evaluatePractice(R, settings = DEFAULT_SETTINGS) {
+function evaluatePractice(R, settings = DEFAULT_SETTINGS) {
   const S = { ...DEFAULT_SETTINGS, ...settings };
   const warnings = [];
   const devices = [];
@@ -111,3 +113,6 @@ export function evaluatePractice(R, settings = DEFAULT_SETTINGS) {
   }
   return { warnings, devices };
 }
+
+  VR.provide('core/practice.js', { shortDevice, splitFactor, evaluatePractice });
+}());

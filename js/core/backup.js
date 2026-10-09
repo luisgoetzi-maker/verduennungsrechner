@@ -1,15 +1,17 @@
 // Gesamt-Backup als JSON (Stoffe, Einstellungen, Lösungen, Verlauf) –
 // z. B. für den Handywechsel.
 
-import { sanitizeSettings } from './settings.js';
+(function () {
+  'use strict';
+  const { sanitizeSettings } = VR.use('core/settings.js');
 
-export const BACKUP_FORMAT = 'verduennungsrechner-backup';
-export const BACKUP_VERSION = 1;
+const BACKUP_FORMAT = 'verduennungsrechner-backup';
+const BACKUP_VERSION = 1;
 
 /**
  * @param {{db, settings, solutions?, history?, appVersion?}} parts
  */
-export function buildBackup({ db, settings, solutions = null, history = null, appVersion = '' }) {
+function buildBackup({ db, settings, solutions = null, history = null, appVersion = '' }) {
   const data = {
     format: BACKUP_FORMAT,
     version: BACKUP_VERSION,
@@ -24,7 +26,7 @@ export function buildBackup({ db, settings, solutions = null, history = null, ap
 }
 
 /** Prüft eine Backup-Datei und liefert eine kurze Übersicht. */
-export function inspectBackup(text) {
+function inspectBackup(text) {
   let data;
   try {
     data = typeof text === 'string' ? JSON.parse(text) : text;
@@ -51,7 +53,7 @@ export function inspectBackup(text) {
  * @param {'merge'|'replace'} mode
  * @returns {{substances?:object, solutions?:object, history?:object, settings?:object}}
  */
-export function applyBackup(data, mode, { db, solutions = null, history = null, saveSettings = null }) {
+function applyBackup(data, mode, { db, solutions = null, history = null, saveSettings = null }) {
   const report = {};
   if (data.substances) report.substances = db.importData(data.substances, mode);
   if (data.solutions && solutions) report.solutions = solutions.importData(data.solutions, mode);
@@ -59,3 +61,6 @@ export function applyBackup(data, mode, { db, solutions = null, history = null, 
   if (data.settings && saveSettings) report.settings = saveSettings(sanitizeSettings(data.settings));
   return report;
 }
+
+  VR.provide('core/backup.js', { BACKUP_FORMAT, BACKUP_VERSION, buildBackup, inspectBackup, applyBackup });
+}());

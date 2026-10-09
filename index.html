@@ -21,7 +21,55 @@
       document.documentElement.setAttribute('data-theme', t);
     } catch (e) { /* Standard: dunkel */ }
   </script>
-  <script type="module" src="js/ui/app.js"></script>
+  <!-- Programmteile in Abhängigkeitsreihenfolge (normale Skripte, laufen auch per Doppelklick) -->
+  <script defer src="js/vr.js"></script>
+  <script defer src="js/core/settings.js"></script>
+  <script defer src="js/core/backup.js"></script>
+  <script defer src="js/core/devices.js"></script>
+  <script defer src="js/core/elements.js"></script>
+  <script defer src="js/core/expiry.js"></script>
+  <script defer src="js/core/numbers.js"></script>
+  <script defer src="js/core/units.js"></script>
+  <script defer src="js/core/formula.js"></script>
+  <script defer src="js/core/modes/common.js"></script>
+  <script defer src="js/core/export.js"></script>
+  <script defer src="js/core/history.js"></script>
+  <script defer src="js/core/modes/einwaage.js"></script>
+  <script defer src="js/core/modes/verduennung.js"></script>
+  <script defer src="js/core/modes/konzentriert.js"></script>
+  <script defer src="js/core/modes/reihe.js"></script>
+  <script defer src="js/core/modes/umrechner.js"></script>
+  <script defer src="js/core/modes/istd.js"></script>
+  <script defer src="js/core/modes/mischung.js"></script>
+  <script defer src="js/core/modes/index.js"></script>
+  <script defer src="js/core/pdf.js"></script>
+  <script defer src="js/core/practice.js"></script>
+  <script defer src="js/core/substances-seed.js"></script>
+  <script defer src="js/core/substance-db.js"></script>
+  <script defer src="js/core/pubchem.js"></script>
+  <script defer src="js/core/solutions.js"></script>
+  <script defer src="js/core/storage.js"></script>
+  <script defer src="js/core/uncertainty.js"></script>
+  <script defer src="js/ui/dom.js"></script>
+  <script defer src="js/ui/result-view.js"></script>
+  <script defer src="js/ui/components.js"></script>
+  <script defer src="js/ui/forms/common.js"></script>
+  <script defer src="js/ui/forms/einwaage.js"></script>
+  <script defer src="js/ui/forms/verduennung.js"></script>
+  <script defer src="js/ui/forms/konzentriert.js"></script>
+  <script defer src="js/ui/forms/reihe.js"></script>
+  <script defer src="js/ui/forms/umrechner.js"></script>
+  <script defer src="js/ui/forms/istd.js"></script>
+  <script defer src="js/ui/forms/mischung.js"></script>
+  <script defer src="js/ui/views/calc.js"></script>
+  <script defer src="js/ui/views/substances.js"></script>
+  <script defer src="js/ui/version.js"></script>
+  <script defer src="js/ui/views/settings.js"></script>
+  <script defer src="js/ui/pdf-export.js"></script>
+  <script defer src="js/ui/views/solutions.js"></script>
+  <script defer src="js/ui/views/history.js"></script>
+  <script defer src="js/ui/features.js"></script>
+  <script defer src="js/ui/app.js"></script>
 </head>
 <body>
   <header class="topbar">
@@ -42,16 +90,9 @@
     (function () {
       var hint = document.getElementById('boot-hint');
       if (!hint) return;
-      if (location.protocol === 'file:') {
-        document.querySelector('#boot-msg h2').textContent = 'Bitte nicht direkt als Datei öffnen';
-        hint.innerHTML = 'Beim Öffnen per Doppelklick (Adresse beginnt mit <code>file://</code>) blockiert der Browser die Programmteile der App. '
-          + 'Bitte im Projektordner <strong>start.bat</strong> doppelklicken – das startet einen kleinen lokalen Server und öffnet die App unter '
-          + '<a href="http://localhost:8080/">http://localhost:8080/</a>. Alternativ im Terminal: <code>node server.mjs</code>.';
-        return;
-      }
       setTimeout(function () {
         if (document.getElementById('boot-msg')) {
-          hint.textContent = 'Die App startet nicht. Bitte die Seite neu laden. Hilft das nicht: Browser aktualisieren bzw. Website-Daten (Cache) für diese Adresse löschen.';
+          hint.textContent = 'Die App startet nicht. Bitte die Seite neu laden (Strg + F5). Hilft das nicht: start.bat verwenden oder Website-Daten (Cache) für diese Adresse löschen.';
         }
       }, 5000);
     })();

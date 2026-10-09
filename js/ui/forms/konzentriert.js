@@ -1,11 +1,13 @@
 // Formular Modus C: Konzentrierte Lösung
 
-import { h } from '../dom.js';
-import { quantityField, numberField, substancePicker, segmented, moreSection } from '../components.js';
-import { CONC_KINDS } from '../../core/units.js';
-import { formCard, applyHighlights, fromDb, isBlank, collectState, restoreState, CONC_UNITS, AMOUNT_UNITS } from './common.js';
+(function () {
+  'use strict';
+  const { h } = VR.use('ui/dom.js');
+  const { quantityField, numberField, substancePicker, segmented, moreSection, extraSubstanceList } = VR.use('ui/components.js');
+  const { CONC_KINDS } = VR.use('core/units.js');
+  const { formCard, applyHighlights, fromDb, isBlank, collectState, restoreState, CONC_UNITS, AMOUNT_UNITS } = VR.use('ui/forms/common.js');
 
-export function createForm({ db, onChange, textMode }) {
+function createForm({ db, onChange, textMode }) {
   const f = {};
   f.substance = substancePicker({ name: 'formula', label: 'Konzentrierte Säure/Lauge (z. B. „HCl 37“)', db, onInput: () => { updatePlaceholders(); onChange(); } });
   f.purity = numberField({ name: 'purity', label: 'Gehalt', suffix: '% (m/m)', onInput: onChange });
@@ -20,7 +22,17 @@ export function createForm({ db, onChange, textMode }) {
   f.z = numberField({ name: 'z', label: 'Wertigkeit z', suffix: 'eq/mol', onInput: onChange });
   f.rhoSol = numberField({ name: 'rhoSol', label: 'Dichte der Ziellösung', suffix: 'g/mL', onInput: onChange, help: 'Nur für Ziele in % (m/m).' });
 
-  const prep = h('div', {}, f.conc.el, f.amount.el);
+  const extra = extraSubstanceList({
+    db, onChange, textMode,
+    fields: [
+      { key: 'purity', type: 'number', label: 'Gehalt (leer = Datenbank)', suffix: '% (m/m)' },
+      { key: 'density', type: 'number', label: 'Dichte (leer = Datenbank)', suffix: 'g/mL' },
+      { key: 'conc', type: 'quantity', label: 'Zielkonzentration', kinds: CONC_KINDS, units: CONC_UNITS, unit: 'mol/L', placeholder: 'z. B. 0,1' },
+    ],
+    template: () => ({ conc: { value: '', unit: f.conc.get().unit } }),
+    addLabel: 'Weitere konzentrierte Lösung hinzufügen',
+  });
+  const prep = h('div', {}, f.conc.el, f.amount.el, extra.el);
   const more = moreSection('Weitere Angaben', [h('div', { class: 'grid2' }, f.M.el, f.z.el), f.rhoSol.el]);
   const el = formCard('C · Konzentrierte Lösung', 'Gehalt % (m/m) + Dichte → mol/L. Oder: Wie viel mL der konzentrierten Lösung für eine verdünnte Lösung?', [
     f.substance.el, h('div', { class: 'grid2' }, f.purity.el, f.density.el), f.task.el, prep, more,
@@ -46,6 +58,7 @@ export function createForm({ db, onChange, textMode }) {
         substance: sel.substance, formula: sel.formula, purity: f.purity.get(), density: f.density.get(),
         M: f.M.get(), z: f.z.get(), rhoSol: f.rhoSol.get(),
         conc: prepare ? f.conc.get() : '', amount: prepare ? f.amount.get() : '',
+        extra: prepare ? extra.collect() : [],
       };
     },
     isBlank() {
@@ -53,8 +66,8 @@ export function createForm({ db, onChange, textMode }) {
       return !sel.substance && !sel.formula && isBlank(f.purity.get()) && isBlank(f.density.get());
     },
     highlight(R) { applyHighlights({ ...fields, formula: f.substance }, R); },
-    getState() { return { ...collectState(fields), substance: f.substance.getState() }; },
-    setState(st) { restoreState(fields, st); if (st) f.substance.setState(st.substance); toggle(); updatePlaceholders(); },
+    getState() { return { ...collectState(fields), substance: f.substance.getState(), extra: extra.getState() }; },
+    setState(st) { restoreState(fields, st); if (st) { f.substance.setState(st.substance); extra.setState(st.extra); } toggle(); updatePlaceholders(); },
     describe() {
       const sel = f.substance.get();
       return sel.substance ? sel.substance.name : sel.formula || '';
@@ -62,3 +75,6 @@ export function createForm({ db, onChange, textMode }) {
     substance() { return f.substance.get().substance; },
   };
 }
+
+  VR.provide('ui/forms/konzentriert.js', { createForm });
+}());

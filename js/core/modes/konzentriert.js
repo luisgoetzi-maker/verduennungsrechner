@@ -2,12 +2,11 @@
 //  - Gehalt % (m/m) + Dichte -> mol/L (und g/L, eq/L, mol/kg)
 //  - umgekehrt: Wie viel mL der konzentrierten Lösung für V einer Zielkonzentration?
 
-import { CONC_KINDS, convert } from '../units.js';
-import {
-  runCalc, readQuantity, readNumber, formatter, step, note, warn,
-  resolveMolarMass, resolveReference, requireParam, CalcError,
-} from './common.js';
-import { pureMassNeeded } from './einwaage.js';
+(function () {
+  'use strict';
+  const { CONC_KINDS, convert } = VR.use('core/units.js');
+  const { runCalc, readQuantity, readNumber, formatter, step, note, warn, resolveMolarMass, resolveReference, requireParam, CalcError, activeExtras, componentName } = VR.use('core/modes/common.js');
+  const { pureMassNeeded } = VR.use('core/modes/einwaage.js');
 
 function isAcid(sub, name) {
   return (sub && sub.cat === 'Säure') || /säure/i.test(name || '');
@@ -22,7 +21,7 @@ function isAcid(sub, name) {
  *   conc, amount            optional: Zielkonzentration und Zielvolumen (Modus "herstellen")
  *   rhoSol                  Dichte der verdünnten Ziellösung (nur für % (m/m)-Ziele)
  */
-export function calcKonzentriert(input, settings = {}) {
+function calcKonzentriert(input, settings = {}) {
   const f = formatter(settings.sig || 4);
   return runCalc((R) => {
     const sub = input.substance || null;
@@ -108,3 +107,57 @@ export function calcKonzentriert(input, settings = {}) {
     }
   });
 }
+
+/**
+ * Mehrere konzentrierte Lösungen in einem Ansatz (＋), z. B. HNO3 + HCl als Säurematrix.
+ * Jede Lösung wird wie im Einzelfall berechnet, das Zielvolumen ist gemeinsam.
+ */
+function calcKonzentriertMehrere(input, settings = {}) {
+  const f = formatter(settings.sig || 4);
+  const extras = activeExtras(input);
+  const parts = [{ ...input, nr: 1 }, ...extras.map((e, i) => ({ ...e, amount: input.amount, rhoSol: input.rhoSol, nr: i + 2 }))];
+  return runCalc((R) => {
+    const results = parts.map((p) => {
+      const name = componentName(p, p.nr);
+      const r = calcKonzentriert(p, settings);
+      if (!r.ok) {
+        const e = new CalcError(`(${p.nr}) ${name}: ${r.error}`, p.nr === 1 ? r.field : 'extra');
+        throw e;
+      }
+      if (!r.instruction) throw new CalcError(`(${p.nr}) ${name}: Bitte eine Zielkonzentration angeben.`, p.nr === 1 ? 'conc' : 'extra');
+      return { p, name, r };
+    });
+    const V = results[0].r.values.V;
+    if (!V) throw new CalcError('Bei mehreren Lösungen bitte das Zielvolumen als Volumen angeben (z. B. in mL).', 'amount');
+    const rows = [];
+    let sumV = 0;
+    for (const { p, name, r } of results) {
+      r.steps.forEach((s) => R.steps.push({ ...s, label: `(${p.nr}) ${name}${s.label ? ` – ${s.label}` : ''}` }));
+      r.warnings.forEach((w) => { if (!R.warnings.some((x) => x.text === w.text)) R.warnings.push(w); });
+      r.hints.forEach((h) => R.hints.push(h));
+      const Vc = r.values.Vconc;
+      sumV += Vc;
+      const target = p.conc && typeof p.conc === 'object' ? `${p.conc.value} ${/[a-zµ%]/i.test(String(p.conc.value)) ? '' : p.conc.unit}`.trim() : String(p.conc || '');
+      const notes = [];
+      if (Vc < (settings.minPipetteUL ?? 10) * 1e-6) notes.push(`unter ${f.n(settings.minPipetteUL ?? 10)} µL`);
+      rows.push({
+        nr: p.nr, name, target, kind: 'stock', V: Vc,
+        source: `${f.n(r.values.w * 100)} % · ${f.n(r.values.rho)} g/mL`,
+        amount: `${f.vol(Vc)} (${f.mass(r.values.mConc)})`, notes,
+      });
+      R.checks.push({ type: 'pipette', L: Vc, label: `(${p.nr}) ${name}` });
+    }
+    if (sumV > V * (1 + 1e-12)) throw new CalcError(`Die konzentrierten Lösungen (${f.vol(sumV)}) sind mehr als das Zielvolumen (${f.vol(V)}).`, 'amount');
+    R.main.push({ label: 'Ansatz', text: `${results.length} konzentrierte Lösungen in ${f.vol(V)}`, primary: true });
+    R.main.push({ label: 'Zugaben gesamt', text: f.vol(sumV), value: sumV, unit: 'L' });
+    R.instruction = `Messkolben (${f.vol(V)}) etwa zur Hälfte mit Wasser füllen, nacheinander ${rows.map((r) => `${f.vol(r.V)} ${r.name}`).join(', ')} zugeben, mischen, auf Raumtemperatur abkühlen lassen und bis zur Marke auffüllen.`;
+    R.table = { type: 'mix', rows };
+    R.checks.push({ type: 'flask', L: V });
+    R.values = { V, sumV, n: rows.length, components: rows.map((r) => ({ name: r.name, target: r.target })) };
+    R.uncertainty = { kind: 'mix', V, items: rows.map((r) => ({ label: `(${r.nr}) ${r.name}`, V1: r.V })) };
+    R.hints = [...new Set(R.hints)];
+  });
+}
+
+  VR.provide('core/modes/konzentriert.js', { calcKonzentriert, calcKonzentriertMehrere });
+}());

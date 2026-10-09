@@ -12,10 +12,12 @@
 // Die Masse der Elektronen wird bei Ionen nicht berücksichtigt
 // (< 0,0006 g/mol pro Ladung, wie in üblichen Tabellen und PubChem).
 
-import { ELEMENTS, ISOTOPES, ISOTOPE_ALIASES, isElementSymbol } from './elements.js';
-import { fromSuperscript, toSuperscript } from './numbers.js';
+(function () {
+  'use strict';
+  const { ELEMENTS, ISOTOPES, ISOTOPE_ALIASES, isElementSymbol } = VR.use('core/elements.js');
+  const { fromSuperscript, toSuperscript } = VR.use('core/numbers.js');
 
-export class FormulaError extends Error {
+class FormulaError extends Error {
   constructor(message, pos = null, input = '') {
     super(message);
     this.name = 'FormulaError';
@@ -307,7 +309,7 @@ function fmtCount(n) {
 }
 
 /** Hill-Notation (C, H, dann alphabetisch; Isotope als [13C]n). */
-export function hillFormula(counts) {
+function hillFormula(counts) {
   const keys = Object.keys(counts);
   const elements = [...new Set(keys.map(elementOfKey))];
   let order;
@@ -328,7 +330,7 @@ export function hillFormula(counts) {
 }
 
 /** Zusammengefasste Anzahl je Element (Isotope werden ihrem Element zugeordnet). */
-export function elementCounts(counts) {
+function elementCounts(counts) {
   const out = {};
   for (const [k, n] of Object.entries(counts)) {
     const el = elementOfKey(k);
@@ -338,14 +340,14 @@ export function elementCounts(counts) {
 }
 
 /** Ladung als hochgestellter Text, z. B. 2- -> "²⁻". */
-export function chargeText(charge) {
+function chargeText(charge) {
   if (!charge) return '';
   const abs = Math.abs(charge);
   return toSuperscript((abs === 1 ? '' : String(abs)) + (charge > 0 ? '+' : '-'));
 }
 
 /** Formel mit tiefgestellten Indizes für die Anzeige: "CuSO₄·5H₂O". */
-export function prettyFormula(body, charge = 0) {
+function prettyFormula(body, charge = 0) {
   // Isotope [13C] -> ¹³C (hochgestellte Ziffern werden unten nicht tiefgestellt)
   const s = body.replace(/\[(\d+)([A-Z][a-z]?)\]/g, (_, a, el) => toSuperscript(a) + el);
   let out = '';
@@ -391,7 +393,7 @@ function preprocess(input) {
  *   hill: string, warnings: string[], notes: string[]
  * }}
  */
-export function parseFormula(input) {
+function parseFormula(input) {
   const raw = preprocess(input);
   if (!raw) throw new FormulaError('Bitte eine Summenformel eingeben.', 0, '');
   const { body: withSpaces, charge, note } = splitCharge(raw);
@@ -434,12 +436,12 @@ export function parseFormula(input) {
 }
 
 /** Molare Masse in g/mol (wirft FormulaError bei ungültiger Formel). */
-export function molarMass(formula) {
+function molarMass(formula) {
   return parseFormula(formula).molarMass;
 }
 
 /** Wie parseFormula, liefert aber { ok:false, error } statt einer Ausnahme. */
-export function tryParseFormula(input) {
+function tryParseFormula(input) {
   try {
     return { ok: true, ...parseFormula(input) };
   } catch (e) {
@@ -449,11 +451,14 @@ export function tryParseFormula(input) {
 }
 
 /** Masse eines Elements (bzw. Isotops) in g/mol. */
-export function atomicMass(symbol) {
+function atomicMass(symbol) {
   if (symbol in ISOTOPES) return ISOTOPES[symbol];
   if (ISOTOPE_ALIASES[symbol]) return ISOTOPES[ISOTOPE_ALIASES[symbol]];
   if (!isElementSymbol(symbol)) throw new FormulaError(`Unbekanntes Elementsymbol „${symbol}“.`);
   return ELEMENTS[symbol].mass;
 }
 
-export const WATER_MOLAR_MASS = WATER_MASS;
+const WATER_MOLAR_MASS = WATER_MASS;
+
+  VR.provide('core/formula.js', { FormulaError, hillFormula, elementCounts, chargeText, prettyFormula, parseFormula, molarMass, tryParseFormula, atomicMass, WATER_MOLAR_MASS });
+}());

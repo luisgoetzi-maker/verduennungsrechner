@@ -14,11 +14,13 @@
 //   table: {...} | undefined, values: {...}
 // }
 
-import { parseQuantity, parseUnit, KINDS, PARAMS, HINTS, UnitError, autoVolume, autoMass, bestUnit, UNIT_LISTS } from '../units.js';
-import { parseNumber, formatNumber, NumberError } from '../numbers.js';
-import { tryParseFormula, atomicMass, elementCounts, WATER_MOLAR_MASS } from '../formula.js';
+(function () {
+  'use strict';
+  const { parseQuantity, parseUnit, KINDS, PARAMS, HINTS, UnitError, autoVolume, autoMass, bestUnit, UNIT_LISTS } = VR.use('core/units.js');
+  const { parseNumber, formatNumber, NumberError } = VR.use('core/numbers.js');
+  const { tryParseFormula, atomicMass, elementCounts, WATER_MOLAR_MASS } = VR.use('core/formula.js');
 
-export class CalcError extends Error {
+class CalcError extends Error {
   constructor(message, field = null, cause = null) {
     super(message);
     this.name = 'CalcError';
@@ -29,14 +31,14 @@ export class CalcError extends Error {
 }
 
 /** Signal: Zusatzangabe fehlt (wird zu result.missing). */
-export class MissingParam extends Error {
+class MissingParam extends Error {
   constructor(params) {
     super('missing');
     this.params = Array.isArray(params) ? params : [params];
   }
 }
 
-export function newResult() {
+function newResult() {
   return {
     ok: true, error: null, field: null, code: null, options: null,
     missing: [], main: [], instruction: null, steps: [], warnings: [], hints: [], checks: [], values: {},
@@ -44,7 +46,7 @@ export function newResult() {
 }
 
 /** Führt eine Rechenfunktion aus und wandelt Fehler in ein Ergebnisobjekt um. */
-export function runCalc(fn) {
+function runCalc(fn) {
   const R = newResult();
   try {
     fn(R);
@@ -79,7 +81,7 @@ function isEmpty(input) {
  * steht im Wert bereits eine Einheit ("5 µg/mL"), hat diese Vorrang.
  * @returns {{value:number, unit:object, base:number}|null}
  */
-export function readQuantity(input, { kinds = null, label = 'Wert', field = null, required = true, allowZero = false } = {}) {
+function readQuantity(input, { kinds = null, label = 'Wert', field = null, required = true, allowZero = false } = {}) {
   if (isEmpty(input)) {
     if (required) throw new CalcError(`${label}: bitte einen Wert eingeben.`, field);
     return null;
@@ -102,7 +104,7 @@ export function readQuantity(input, { kinds = null, label = 'Wert', field = null
 }
 
 /** Liest eine Zahl (optional). */
-export function readNumber(input, { label = 'Wert', field = null, required = false, min = null, max = null, minExclusive = true } = {}) {
+function readNumber(input, { label = 'Wert', field = null, required = false, min = null, max = null, minExclusive = true } = {}) {
   if (isEmpty(input)) {
     if (required) throw new CalcError(`${label}: bitte einen Wert eingeben.`, field);
     return null;
@@ -119,7 +121,7 @@ export function readNumber(input, { label = 'Wert', field = null, required = fal
 }
 
 /** Formatierungshelfer für eine Rechnung. */
-export function formatter(sig = 4) {
+function formatter(sig = 4) {
   const n = (v) => formatNumber(v, sig);
   const withUnit = (v, unit) => `${n(v)} ${typeof unit === 'string' ? unit : unit.sym}`;
   return {
@@ -152,22 +154,22 @@ export function formatter(sig = 4) {
   };
 }
 
-export function step(label, eq, sub, res) {
+function step(label, eq, sub, res) {
   return { label, eq, sub, res };
 }
 
-export function note(label, text) {
+function note(label, text) {
   return { label, text };
 }
 
 /** Rechenweg-Schritt als einzeiliger Text. */
-export function stepText(s) {
+function stepText(s) {
   if (s.text) return s.label ? `${s.label}: ${s.text}` : s.text;
   const parts = [s.eq, s.sub, s.res].filter(Boolean);
   return `${s.label ? `${s.label}: ` : ''}${parts.join(' = ')}`;
 }
 
-export function addHint(R, key) {
+function addHint(R, key) {
   if (HINTS[key]) R.hints.push(HINTS[key]);
 }
 
@@ -176,7 +178,7 @@ export function addHint(R, key) {
  * Vorrang: manuelle Eingabe M > eingegebene Formel > Stoffeintrag.
  * @returns {{M:number|null, parsed:object|null, label:string, source:string}}
  */
-export function resolveMolarMass({ substance = null, formula = null, M = null }) {
+function resolveMolarMass({ substance = null, formula = null, M = null }) {
   let parsed = null;
   let label = '';
   const f = formula && String(formula).trim();
@@ -209,7 +211,7 @@ export function resolveMolarMass({ substance = null, formula = null, M = null })
  * type: 'compound' (wie Formel) | 'anhydrous' (ohne Kristallwasser) | 'element' | 'formula'
  * @returns {{Mref:number, k:number, label:string, isCompound:boolean}}
  */
-export function resolveReference(ref, mm, f) {
+function resolveReference(ref, mm, f) {
   const type = (ref && ref.type) || 'compound';
   if (type === 'compound') return { Mref: mm.M, k: 1, label: mm.label, isCompound: true };
   if (!mm.M) throw new MissingParam('M');
@@ -243,11 +245,31 @@ export function resolveReference(ref, mm, f) {
   throw new CalcError('Unbekannte Bezugsform.', 'reference');
 }
 
-export function requireParam(value, name) {
+function requireParam(value, name) {
   if (!(typeof value === 'number' && Number.isFinite(value) && value > 0)) throw new MissingParam(name);
   return value;
 }
 
-export function warn(R, text, level = 'warn') {
+function warn(R, text, level = 'warn') {
   R.warnings.push({ level, text });
 }
+
+/** Weitere Stoffe (＋ im Formular): nur Einträge mit Stoff oder Formel zählen. */
+function activeExtras(input) {
+  return (Array.isArray(input && input.extra) ? input.extra : [])
+    .filter((e) => e && (e.substance || String(e.formula || '').trim()));
+}
+
+/** Anzeigename eines Stoffes (Datenbankeintrag, Formel oder "Stoff n"). */
+function componentName(e, nr) {
+  if (e && e.substance && e.substance.name) return e.substance.name;
+  const fml = e && String(e.formula || '').trim();
+  if (fml) {
+    const r = tryParseFormula(fml);
+    return r.ok ? r.pretty : fml;
+  }
+  return `Stoff ${nr}`;
+}
+
+  VR.provide('core/modes/common.js', { CalcError, MissingParam, newResult, runCalc, readQuantity, readNumber, formatter, step, note, stepText, addHint, resolveMolarMass, resolveReference, requireParam, warn, activeExtras, componentName });
+}());

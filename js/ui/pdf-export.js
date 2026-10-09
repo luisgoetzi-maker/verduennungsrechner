@@ -1,10 +1,12 @@
 // PDF-Export einer Berechnung (Download).
 
-import { toast, download } from './dom.js';
-import { makePdf } from '../core/pdf.js';
+(function () {
+  'use strict';
+  const { toast, download } = VR.use('ui/dom.js');
+  const { makePdf } = VR.use('core/pdf.js');
 
 /** PDF aus dem Text einer Berechnung erzeugen und herunterladen. */
-export function downloadPdf(text, title, ts = Date.now()) {
+function downloadPdf(text, title, ts = Date.now()) {
   const lines = String(text).split('\n');
   const head = lines[0] && lines[0].startsWith('Verdünnungsrechner') ? lines.shift() : `Verdünnungsrechner – ${title}`;
   const bytes = makePdf(lines, { title: head, footer: 'Erstellt mit dem Verdünnungsrechner – Werte vor Verwendung prüfen' });
@@ -14,3 +16,6 @@ export function downloadPdf(text, title, ts = Date.now()) {
   download(`berechnung-${safe}-${stamp}.pdf`, new Blob([bytes], { type: 'application/pdf' }));
   toast('PDF wird gespeichert (Ordner „Downloads“).');
 }
+
+  VR.provide('ui/pdf-export.js', { downloadPdf });
+}());

@@ -1,20 +1,22 @@
 // Gemeinsames für die Formulare der Rechenmodi.
 
-import { h } from '../dom.js';
-import { formatNumber } from '../../core/numbers.js';
+(function () {
+  'use strict';
+  const { h } = VR.use('ui/dom.js');
+  const { formatNumber } = VR.use('core/numbers.js');
 
 // Einheitenlisten für Konzentrationsfelder (häufige zuerst)
-export const CONC_UNITS = [
+const CONC_UNITS = [
   'mol/L', 'mmol/L', 'µmol/L', 'nmol/L', 'M', 'mM', 'µM', 'nM',
   'g/L', 'mg/mL', 'mg/L', 'µg/mL', 'µg/L', 'ng/mL', 'ng/L', 'pg/mL', '% (m/V)',
   '% (m/m)', 'ppm', 'ppb', 'ppt', 'mg/kg', 'µg/kg',
   '% (V/V)', 'mL/L', 'eq/L', 'meq/L', 'N', 'mol/kg', 'mmol/kg',
 ];
-export const VOLUME_UNITS = ['mL', 'L', 'µL'];
-export const AMOUNT_UNITS = ['mL', 'L', 'µL', 'g', 'kg'];
+const VOLUME_UNITS = ['mL', 'L', 'µL'];
+const AMOUNT_UNITS = ['mL', 'L', 'µL', 'g', 'kg'];
 
 /** Karte mit Titel und Beschreibung. */
-export function formCard(title, description, children) {
+function formCard(title, description, children) {
   return h('form', { class: 'card', onsubmit: (e) => e.preventDefault(), autocomplete: 'off' },
     h('h2', {}, title),
     description ? h('p', { class: 'sub' }, description) : null,
@@ -25,7 +27,7 @@ export function formCard(title, description, children) {
  * Markiert Felder für fehlende Angaben (R.missing) und das fehlerhafte Feld
  * (R.field); öffnet zugeklappte Bereiche, in denen ein markiertes Feld liegt.
  */
-export function applyHighlights(fields, R) {
+function applyHighlights(fields, R) {
   for (const f of Object.values(fields)) {
     if (f && f.highlight) f.highlight(false);
     if (f && f.invalid) f.invalid(false);
@@ -49,19 +51,19 @@ export function applyHighlights(fields, R) {
 }
 
 /** Platzhalter aus dem Stoffeintrag, z. B. "37 (aus Datenbank)". */
-export function fromDb(value, fallback = '') {
+function fromDb(value, fallback = '') {
   if (value === undefined || value === null || value === '') return fallback;
   return `${formatNumber(value, 6)} (aus Datenbank)`;
 }
 
-export function isBlank(v) {
+function isBlank(v) {
   if (v === null || v === undefined) return true;
   if (typeof v === 'object') return v.value === undefined || String(v.value).trim() === '';
   return String(v).trim() === '';
 }
 
 /** Zustand aller Felder (für Speichern/Verlauf). */
-export function collectState(fields, picker = null) {
+function collectState(fields, picker = null) {
   const st = {};
   for (const [k, f] of Object.entries(fields)) {
     if (!f || f === picker) continue;
@@ -71,7 +73,7 @@ export function collectState(fields, picker = null) {
   return st;
 }
 
-export function restoreState(fields, st, picker = null) {
+function restoreState(fields, st, picker = null) {
   if (!st) return;
   for (const [k, f] of Object.entries(fields)) {
     if (!f || f === picker || !(k in st)) continue;
@@ -79,3 +81,6 @@ export function restoreState(fields, st, picker = null) {
   }
   if (picker && 'substance' in st) picker.setState(st.substance);
 }
+
+  VR.provide('ui/forms/common.js', { CONC_UNITS, VOLUME_UNITS, AMOUNT_UNITS, formCard, applyHighlights, fromDb, isBlank, collectState, restoreState });
+}());

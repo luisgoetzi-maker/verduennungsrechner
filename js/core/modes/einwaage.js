@@ -1,11 +1,10 @@
 // Modus A: Einwaage – Zielkonzentration + Volumen -> abzuwiegende Masse
 // (bzw. abzumessendes Volumen bei Flüssigkeiten über die Dichte).
 
-import { CONC_KINDS } from '../units.js';
-import {
-  runCalc, readQuantity, readNumber, formatter, step, note, addHint, warn,
-  resolveMolarMass, resolveReference, requireParam, MissingParam, CalcError,
-} from './common.js';
+(function () {
+  'use strict';
+  const { CONC_KINDS } = VR.use('core/units.js');
+  const { runCalc, readQuantity, readNumber, formatter, step, note, addHint, warn, resolveMolarMass, resolveReference, requireParam, MissingParam, CalcError } = VR.use('core/modes/common.js');
 
 /** Zeigt eine Umrechnung in kohärente Einheiten an, wenn nötig. */
 function coherent(R, f, qty, baseSym, symbol) {
@@ -20,7 +19,7 @@ function coherent(R, f, qty, baseSym, symbol) {
  * @param {object} p {conc, V (L|null), mSol (g|null), mm, ref, z, rhoSol}
  * @returns {{mComp:number, V:number|null, mSol:number|null, n?:number}}
  */
-export function pureMassNeeded(R, f, { conc, V, mSol, mm, ref, z, rhoSol }) {
+function pureMassNeeded(R, f, { conc, V, mSol, mm, ref, z, rhoSol }) {
   const kind = conc.unit.kind;
   const Mc = mm.M;
   const name = mm.label || 'Stoff';
@@ -131,7 +130,7 @@ export function pureMassNeeded(R, f, { conc, V, mSol, mm, ref, z, rhoSol }) {
  *   z           Wertigkeit (für eq/L)
  *   reference   Bezugsform {type:'compound'|'anhydrous'|'element'|'formula', element, formula, count}
  */
-export function calcEinwaage(input, settings = {}) {
+function calcEinwaage(input, settings = {}) {
   const f = formatter(settings.sig || 4);
   return runCalc((R) => {
     const conc = readQuantity(input.conc, { kinds: CONC_KINDS, label: 'Zielkonzentration', field: 'conc' });
@@ -228,3 +227,6 @@ export function calcEinwaage(input, settings = {}) {
     R.uncertainty = { kind: 'weighing', m: mWeigh, V: amount.unit.kind === 'volume' ? r.V : null, Vproduct: liquid ? Vp : null };
   });
 }
+
+  VR.provide('core/modes/einwaage.js', { pureMassNeeded, calcEinwaage });
+}());

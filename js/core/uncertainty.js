@@ -8,16 +8,20 @@
 //  - Waage: Standardunsicherheit 0,1 mg je Wägung (einstellbar über opts)
 //  - Relative Unsicherheiten werden quadratisch addiert (Produkte/Quotienten)
 
-import { DEFAULT_SETTINGS } from './settings.js';
-import { formatNumber } from './numbers.js';
-import { formatAuto } from './units.js';
 
 // Messkolben Klasse A, DIN EN ISO 1042: Nennvolumen mL -> Toleranz ± mL
-export const FLASK_TOL = { 5: 0.025, 10: 0.025, 20: 0.04, 25: 0.04, 50: 0.06, 100: 0.1, 200: 0.15, 250: 0.15, 500: 0.25, 1000: 0.4, 2000: 0.6 };
+
+(function () {
+  'use strict';
+  const { DEFAULT_SETTINGS } = VR.use('core/settings.js');
+  const { formatNumber } = VR.use('core/numbers.js');
+  const { formatAuto } = VR.use('core/units.js');
+
+const FLASK_TOL = { 5: 0.025, 10: 0.025, 20: 0.04, 25: 0.04, 50: 0.06, 100: 0.1, 200: 0.15, 250: 0.15, 500: 0.25, 1000: 0.4, 2000: 0.6 };
 // Vollpipetten Klasse A, DIN EN ISO 648: mL -> ± mL
-export const VOLPIP_TOL = { 1: 0.008, 2: 0.01, 5: 0.015, 10: 0.02, 20: 0.03, 25: 0.03, 50: 0.05, 100: 0.08 };
+const VOLPIP_TOL = { 1: 0.008, 2: 0.01, 5: 0.015, 10: 0.02, 20: 0.03, 25: 0.03, 50: 0.05, 100: 0.08 };
 // Kolbenhubpipetten ISO 8655-2: Nennvolumen µL -> [systematisch %, zufällig %]
-export const PIPETTE_TOL = { 2: [12, 6], 10: [1.2, 0.8], 20: [1, 0.5], 100: [0.8, 0.3], 200: [0.8, 0.3], 1000: [0.8, 0.3], 5000: [0.8, 0.3], 10000: [0.6, 0.3] };
+const PIPETTE_TOL = { 2: [12, 6], 10: [1.2, 0.8], 20: [1, 0.5], 100: [0.8, 0.3], 200: [0.8, 0.3], 1000: [0.8, 0.3], 5000: [0.8, 0.3], 10000: [0.6, 0.3] };
 
 const SQ3 = Math.sqrt(3);
 const near = (a, b) => Math.abs(a - b) / b < 1e-6;
@@ -36,7 +40,7 @@ function pipetteTol(nominalUL) {
  * @param {'auto'|'flask'|'pipette'} role  'flask' = Endvolumen (Messkolben)
  * @returns {{L, u, urel, device}}  u in Litern
  */
-export function volumeUncertainty(L, role = 'pipette', settings = DEFAULT_SETTINGS) {
+function volumeUncertainty(L, role = 'pipette', settings = DEFAULT_SETTINGS) {
   const S = { ...DEFAULT_SETTINGS, ...settings };
   const mL = L * 1000;
   const uL = L * 1e6;
@@ -81,7 +85,7 @@ const pct = (x) => `${formatNumber(x * 100, 2)} %`;
  * @param {{settings?, stockUrel?:number, balanceMg?:number, purityUrel?:number}} opts  stockUrel/purityUrel relativ (0,005 = 0,5 %)
  * @returns {{ok:boolean, rows:Array<{label, device, urel}>, urel:number, U:number, lines:string[], perStandard?:Array}}
  */
-export function estimateUncertainty(spec, opts = {}) {
+function estimateUncertainty(spec, opts = {}) {
   const S = { ...DEFAULT_SETTINGS, ...(opts.settings || {}) };
   const stockUrel = opts.stockUrel || 0;
   if (!spec) return { ok: false, rows: [], urel: 0, U: 0, lines: [] };
@@ -155,3 +159,6 @@ export function estimateUncertainty(spec, opts = {}) {
   lines.push(`kombiniert: u = ${pct(urel)}; erweitert U (k = 2, ca. 95 %) = ${pct(2 * urel)}`);
   return { ok: true, rows, urel, U: 2 * urel, lines };
 }
+
+  VR.provide('core/uncertainty.js', { FLASK_TOL, VOLPIP_TOL, PIPETTE_TOL, volumeUncertainty, estimateUncertainty });
+}());

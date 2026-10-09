@@ -1,11 +1,14 @@
 // Kleine DOM-Helfer ohne Framework.
 
+(function () {
+  'use strict';
+
 /**
  * Erzeugt ein Element: h('div', {class: 'x', onclick: fn}, 'Text', kind, ...)
  * Attribute mit on… werden als Event-Listener gesetzt; `html` setzt innerHTML
  * (nur für statische, eigene Inhalte wie Icons verwenden).
  */
-export function h(tag, attrs = {}, ...children) {
+function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs || {})) {
     if (v === null || v === undefined || v === false) continue;
@@ -21,7 +24,7 @@ export function h(tag, attrs = {}, ...children) {
   return el;
 }
 
-export function append(el, children) {
+function append(el, children) {
   for (const c of children.flat(Infinity)) {
     if (c === null || c === undefined || c === false) continue;
     el.append(c instanceof Node ? c : document.createTextNode(String(c)));
@@ -29,12 +32,12 @@ export function append(el, children) {
   return el;
 }
 
-export function clear(el) {
+function clear(el) {
   while (el.firstChild) el.firstChild.remove();
   return el;
 }
 
-export function debounce(fn, ms = 200) {
+function debounce(fn, ms = 200) {
   let t = null;
   const d = (...args) => {
     clearTimeout(t);
@@ -48,7 +51,7 @@ export function debounce(fn, ms = 200) {
 }
 
 let toastTimer = null;
-export function toast(text, ms = 2600) {
+function toast(text, ms = 2600) {
   document.querySelectorAll('.toast').forEach((t) => t.remove());
   const el = h('div', { class: 'toast', role: 'status' }, text);
   document.body.append(el);
@@ -57,7 +60,7 @@ export function toast(text, ms = 2600) {
 }
 
 /** Overlay von unten (Bearbeiten-Formulare). Gibt {el, body, close} zurück. */
-export function sheet(title, { onClose } = {}) {
+function sheet(title, { onClose } = {}) {
   const body = h('div', { class: 'sheet-body' });
   const close = () => {
     backdrop.remove();
@@ -77,12 +80,12 @@ export function sheet(title, { onClose } = {}) {
 }
 
 /** Bestätigungsdialog (nativ, robust auf Android). */
-export function confirmBox(text) {
+function confirmBox(text) {
   return window.confirm(text);
 }
 
 /** Datei herunterladen (Blob). */
-export function download(filename, content, type = 'application/octet-stream') {
+function download(filename, content, type = 'application/octet-stream') {
   const blob = content instanceof Blob ? content : new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const a = h('a', { href: url, download: filename });
@@ -93,7 +96,7 @@ export function download(filename, content, type = 'application/octet-stream') {
 }
 
 /** Datei auswählen und als Text lesen. */
-export function pickFile(accept = '.json,application/json') {
+function pickFile(accept = '.json,application/json') {
   return new Promise((resolve, reject) => {
     const input = h('input', { type: 'file', accept, style: { display: 'none' } });
     input.addEventListener('change', () => {
@@ -110,18 +113,18 @@ export function pickFile(accept = '.json,application/json') {
   });
 }
 
-export function todayISO() {
+function todayISO() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export function formatDate(iso) {
+function formatDate(iso) {
   if (!iso) return '';
   const [y, m, d] = String(iso).slice(0, 10).split('-');
   return d && m && y ? `${d}.${m}.${y}` : iso;
 }
 
-export function formatDateTime(ts) {
+function formatDateTime(ts) {
   const d = new Date(ts);
   if (Number.isNaN(d.getTime())) return '';
   return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -129,7 +132,7 @@ export function formatDateTime(ts) {
 
 // Inline-SVG-Icons (Linien, 24×24)
 const svg = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-export const ICONS = {
+const ICONS = {
   calc: svg('<rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8.5 7h7M8.5 11h1M12 11h1M15.5 11h0M8.5 14.5h1M12 14.5h1M8.5 18h1M12 18h1M15.5 14.5v3.5"/>'),
   flask: svg('<path d="M9 3h6M10 3v6.2L4.8 18.1A2 2 0 0 0 6.5 21h11a2 2 0 0 0 1.7-2.9L14 9.2V3"/><path d="M7.2 14h9.6"/>'),
   bottle: svg('<path d="M9 2h6v3H9zM8 5h8l1 3v12a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V8z"/><path d="M7 12h10"/>'),
@@ -149,3 +152,6 @@ export const ICONS = {
   print: svg('<path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7"/>'),
   restore: svg('<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>'),
 };
+
+  VR.provide('ui/dom.js', { h, append, clear, debounce, toast, sheet, confirmBox, download, pickFile, todayISO, formatDate, formatDateTime, ICONS });
+}());

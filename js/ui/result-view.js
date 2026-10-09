@@ -1,10 +1,12 @@
 // Darstellung eines Rechenergebnisses: Hauptwert, Anleitung, Warnungen,
 // Tabelle, Rechenweg, Aktionen.
 
-import { h, ICONS } from './dom.js';
-import { formatNumber } from '../core/numbers.js';
-import { formatAuto, PARAMS } from '../core/units.js';
-import { seriesRows, mixRows } from '../core/export.js';
+(function () {
+  'use strict';
+  const { h, ICONS } = VR.use('ui/dom.js');
+  const { formatNumber } = VR.use('core/numbers.js');
+  const { formatAuto, PARAMS } = VR.use('core/units.js');
+  const { seriesRows, mixRows } = VR.use('core/export.js');
 
 function msg(level, text) {
   return h('div', { class: `msg ${level}` }, h('div', {}, text));
@@ -62,7 +64,7 @@ function convertTable(table, sig) {
  * @param {object} R Ergebnis
  * @param {{sig:number, actions?: Array<{label, icon, onClick}>, extra?: Node[]}} opts
  */
-export function renderResult(R, { sig = 4, actions = [], extra = [] } = {}) {
+function renderResult(R, { sig = 4, actions = [], extra = [] } = {}) {
   const card = h('section', { class: 'card result', 'aria-live': 'polite' });
   if (!R.ok) {
     if (R.missing && R.missing.length) {
@@ -95,6 +97,12 @@ export function renderResult(R, { sig = 4, actions = [], extra = [] } = {}) {
 
   if (R.table && R.table.type === 'series') card.append(seriesTable(R.table, sig));
   if (R.table && R.table.type === 'mix') card.append(mixTable(R.table));
+  if (R.extraTable) {
+    card.append(h('div', { class: 'group-title' }, R.extraTable.title));
+    card.append(h('div', { class: 'table-wrap' }, h('table', { class: 'data mix' },
+      h('thead', {}, h('tr', {}, R.extraTable.headers.map((x) => h('th', {}, x)))),
+      h('tbody', {}, R.extraTable.rows.map((cells) => h('tr', {}, cells.map((c) => h('td', {}, c))))))));
+  }
   if (R.table && R.table.type === 'convert') card.append(...convertTable(R.table, sig));
 
   R.hints.forEach((t) => card.append(msg('info', t)));
@@ -113,8 +121,9 @@ export function renderResult(R, { sig = 4, actions = [], extra = [] } = {}) {
   return card;
 }
 
-export function emptyResult(text = 'Werte eingeben – das Ergebnis erscheint sofort.') {
+function emptyResult(text = 'Werte eingeben – das Ergebnis erscheint sofort.') {
   return h('section', { class: 'card result empty' }, text);
 }
 
-export { formatAuto, ICONS };
+  VR.provide('ui/result-view.js', { formatAuto, ICONS, renderResult, emptyResult });
+}());

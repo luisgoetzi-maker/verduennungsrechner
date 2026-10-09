@@ -2,13 +2,12 @@
 // Je Komponente: Einwaage (Feststoff/Reinstoff) oder Pipettiervolumen aus
 // einer Stammlösung; alles zusammen auf ein Endvolumen auffüllen.
 
-import { CONC_KINDS, convert, PARAMS } from '../units.js';
-import {
-  runCalc, readQuantity, readNumber, formatter, step, note, warn, addHint,
-  resolveMolarMass, resolveReference, CalcError, MissingParam,
-} from './common.js';
-import { pureMassNeeded } from './einwaage.js';
-import { DEFAULT_SETTINGS } from '../settings.js';
+(function () {
+  'use strict';
+  const { CONC_KINDS, convert, PARAMS } = VR.use('core/units.js');
+  const { runCalc, readQuantity, readNumber, formatter, step, note, warn, addHint, resolveMolarMass, resolveReference, CalcError, MissingParam } = VR.use('core/modes/common.js');
+  const { pureMassNeeded } = VR.use('core/modes/einwaage.js');
+  const { DEFAULT_SETTINGS } = VR.use('core/settings.js');
 
 function isBlankValue(v) {
   if (v === null || v === undefined) return true;
@@ -17,7 +16,7 @@ function isBlankValue(v) {
 }
 
 /** Komponente ohne Stoff, Formel und Werte wird ignoriert. */
-export function isBlankComponent(c) {
+function isBlankComponent(c) {
   return !c || (!c.substance && !String(c.formula || '').trim() && isBlankValue(c.conc) && isBlankValue(c.stock) && isBlankValue(c.M));
 }
 
@@ -28,7 +27,7 @@ export function isBlankComponent(c) {
  *   commonConc  gemeinsame Zielkonzentration
  *   components  [{substance, formula, M, conc, source:'stock'|'solid', stock, purity, reference}]
  */
-export function calcMischung(input, settings = {}) {
+function calcMischung(input, settings = {}) {
   const S = { ...DEFAULT_SETTINGS, ...settings };
   const f = formatter(S.sig);
   return runCalc((R) => {
@@ -153,7 +152,7 @@ export function calcMischung(input, settings = {}) {
 }
 
 /** Hat die Einwaage weitere Stoffe (über das ＋ im Formular)? */
-export function hasExtraSubstances(input) {
+function hasExtraSubstances(input) {
   return Array.isArray(input && input.extra) && input.extra.some((e) => e && (e.substance || String(e.formula || '').trim()));
 }
 
@@ -161,7 +160,7 @@ export function hasExtraSubstances(input) {
  * Modus A mit mehreren Stoffen: Einwaage jedes Stoffes für eine gemeinsame Lösung.
  * Der erste Stoff kommt aus den normalen Feldern, weitere aus input.extra.
  */
-export function calcEinwaageMehrere(input, settings = {}) {
+function calcEinwaageMehrere(input, settings = {}) {
   let kind = null;
   try {
     kind = readQuantity(input.amount, { label: 'Volumen', field: 'amount' }).unit.kind;
@@ -178,3 +177,6 @@ export function calcEinwaageMehrere(input, settings = {}) {
   const extra = input.extra.filter((e) => e && (e.substance || String(e.formula || '').trim())).map((e) => ({ ...e, source: 'solid' }));
   return calcMischung({ amount: input.amount, rhoSol: input.rhoSol, components: [main, ...extra] }, settings);
 }
+
+  VR.provide('core/modes/mischung.js', { isBlankComponent, calcMischung, hasExtraSubstances, calcEinwaageMehrere });
+}());
